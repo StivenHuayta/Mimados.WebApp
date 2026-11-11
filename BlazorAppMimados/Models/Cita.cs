@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 namespace Mimados_WebApp.Models
 {
     public class Cita
     {
+        [JsonPropertyName("id")]
         public int CitaId { get; set; }
         public int EmpleadoId { get; set; }
         public int MascotaId { get; set; }

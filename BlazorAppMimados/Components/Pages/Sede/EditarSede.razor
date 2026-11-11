@@ -75,9 +75,9 @@
     <h3 class="fw-bold text-secondary m-0">
         <i class="fas fa-bone text-warning me-2"></i> Listado de Servicios
     </h3>
-    <a href="/servicio/nuevo" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i> Nuevo Servicio
-    </a>
+    <button type="button" class="btn btn-success" @onclick="AbrirBuscadorServicio">
+    <i class="bi bi-plus-circle me-1"></i> Nuevo Servicio
+</button>
 </div>
     <Card Title="Lista de Servicios"
           FooterClass="text-secondary small"
@@ -138,7 +138,7 @@
                             }
                     </td>
                     <td >
-                        <button class="btn btn-danger btn-sm" ">
+                        <button class="btn btn-danger btn-sm" @onclick="() => EliminarSedeServicio(ser.IdSedeServicio)">
                              Desactivar
                         </button>
                     </td>
@@ -152,6 +152,77 @@
     </div>
     }
 </div>
+
+
+
+@if (mostrarModalServicio)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white py-3">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-balloon-heart-fill me-2"></i>Buscador de Servicios</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalServicio"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="input-group mb-3 shadow-sm">
+                        <span class="input-group-text bg-light"><i class="bi bi-funnel text-secondary"></i></span>
+                        <input type="text" class="form-control" placeholder="Escriba el nombre del servicio..." 
+                               @bind="textoBusquedaServicio" @bind:event="oninput" @onkeyup="FiltrarServicios" />
+                        <button class="btn btn-primary px-3" type="button" @onclick="FiltrarServicios">
+                            Buscar
+                        </button>
+                    </div>
+
+                    <div class="table-responsive border rounded-3 bg-white" style="max-height: 250px;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th class="text-center" style="width: 120px;">ID</th>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Duración</th>
+                                    <th class="text-center" style="width: 120px;">Selección</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (serviciosFiltrados.Any())
+                                {
+                                    @foreach (var servicio in serviciosFiltrados)
+                                    {
+                                        <tr>
+                                            <td class="text-center"><span class="badge bg-light text-secondary border">@servicio.Id</span></td>
+                                            <td class="fw-semibold text-dark">@servicio.Nombre</td>
+                                            <td class="text-dark">@servicio.PrecioReferencial</td>
+                                            <td class="text-dark">@servicio.DuracionMinutos</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-success px-3 rounded-pill shadow-sm" 
+                                                        @onclick="() => SeleccionarServicio(servicio)">
+                                                    Seleccionar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>No se encontraron servicios.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary px-4 shadow-sm" @onclick="CerrarModalServicio">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -169,6 +240,12 @@
     private bool guardando = false;
     private string? mensajeError;
 
+    // Variables para el control del Modal de Servicios
+    private bool mostrarModalServicio = false;
+    private string textoBusquedaServicio = "";
+    private List<Servicio> todosLosServicios = new();
+    private List<Servicio> serviciosFiltrados = new();
+    //fin nodales
 
 
     protected override async Task OnInitializedAsync()
@@ -242,13 +319,43 @@
         Nav.NavigateTo("/sede/administrar");
 
     }
-    private void ActualizarMascota()
+     private async Task EliminarSedeServicio(int idSedeServicio)
     {
-        // Aquí usarías HttpClient (PUT) para actualizar en BD
-        Console.WriteLine($"Actualizando datos de la sede ID {Id}: {editarSede?.Nombre}");
+        await SedeServicioService.EliminarSedeServicioAsync(idSedeServicio);
+        listaServiciosDTO = await SedeServicioService.ObtenerServiciosPorSedeAsync(Id);
+    }
+
+    // Buscador de Servicios
+    private async Task AbrirBuscadorServicio()
+    {
+        textoBusquedaServicio = "";
+        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id);
+
+        mostrarModalServicio = true;
+    }
+
+    private void CerrarModalServicio()
+    {
+        mostrarModalServicio = false;
+    }
+
+    private async Task SeleccionarServicio(Servicio servicio)
+    {
+        //nuevaOrden.Servicio = servicio;
+        SedeServicio nuevoSedeServicio = new SedeServicio();
+        Sede sede= new Sede();
+        sede.Id = Id;
+        nuevoSedeServicio.Sede = sede;
+        nuevoSedeServicio.Servicio = servicio;
+        await SedeServicioService.CrearSedeServicioAsync(nuevoSedeServicio);
+
+        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id);
+        listaServiciosDTO = await SedeServicioService.ObtenerServiciosPorSedeAsync(Id);
         
-        // Regresamos a la grilla principal
-        Nav.NavigateTo("/sede/administrar");
+    }
+    private void FiltrarServicios()
+    {
+        
     }
 
     public class SedeEditar

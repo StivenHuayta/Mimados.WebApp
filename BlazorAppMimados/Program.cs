@@ -1,8 +1,9 @@
-using BlazorAppMimados.Services;
+﻿using BlazorAppMimados.Services;
 using Mimados_WebApp.Components;
 using Mimados_WebApp.Models;
 using Mimados_WebApp.Security;
 using Mimados_WebApp.Services;
+using Mimados_WebApp.Services.CitaServices;
 using Mimados_WebApp.Services.MascotaServices;
 using Mimados_WebApp.Services.SedeService;
 using Mimados_WebApp.Services.SedeServicioService;
@@ -31,6 +32,24 @@ builder.Services.AddHttpClient<IEmpleadoService, EmpleadoService>(client =>
 builder.Services.AddHttpClient<IHorarioLaboralService, HorarioLaboralService>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<ICitaService, CitaService>(client =>
+{
+    client.BaseAddress = new Uri(
+        "http://localhost:8080/MimadosRS/webresources/");
+});
+
+builder.Services.AddHttpClient<IDisponibilidadService, DisponibilidadService>(client =>
+{
+    client.BaseAddress = new Uri(
+        "http://localhost:8080/MimadosRS/webresources/");
+});
+
+builder.Services.AddHttpClient<IVeterinarioService, VeterinarioService>(client =>
+{
+    client.BaseAddress = new Uri(
+        "http://localhost:8080/MimadosRS/webresources/");
 });
 
 // Servicios de la aplicación

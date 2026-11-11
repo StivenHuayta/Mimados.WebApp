@@ -1,72 +1,180 @@
 @page "/cliente/citas"
 @rendermode InteractiveServer
 
+@using Mimados_WebApp.Models
+@using Mimados_WebApp.Services.CitaServices
+@using Mimados_WebApp.Services.MascotaServices
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject ICitaService CitaService
+@inject IMascotaService MascotaService
+@inject AuthenticationStateProvider AuthStateProvider
+
 <PageTitle>Mis Citas - Mimados</PageTitle>
 
 <div class="container mt-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
             <h2 class="mb-1">Mis Citas</h2>
-            <p class="text-muted mb-0">Consulta y administra tus reservas veterinarias.</p>
+            <p class="text-muted mb-0">
+                Consulta y administra tus reservas veterinarias.
+            </p>
         </div>
         <a class="btn btn-success" href="/cliente/citas/nueva">
-            <i class="bi bi-calendar-plus me-1"></i> Reservar Nueva Cita
+            <i class="bi bi-calendar-plus me-1"></i>
+            Reservar Nueva Cita
         </a>
     </div>
 
     <div class="card shadow-sm border-0 bg-light">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check text-success me-2"></i>Mis reservas</h5>
-            <a class="btn btn-outline-success btn-sm" href="/cliente/citas/disponibilidad">Ver disponibilidad</a>
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-calendar-check text-success me-2"></i>
+                Mis reservas
+            </h5>
+            <a class="btn btn-outline-success btn-sm"
+               href="/cliente/citas/disponibilidad">
+                Ver disponibilidad
+            </a>
         </div>
+
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-3">Código</th>
-                            <th>Mascota</th>
-                            <th>Servicio</th>
-                            <th>Fecha y hora</th>
-                            <th>Sede</th>
-                            <th>Estado</th>
-                            <th class="text-end pe-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="ps-3">C-001</td>
-                            <td>Firulais</td>
-                            <td>Consulta general</td>
-                            <td>04/11/2026, 10:00 a. m.</td>
-                            <td>San Miguel</td>
-                            <td><span class="badge bg-success">Confirmada</span></td>
-                            <td class="text-end pe-3">
-                                <div class="d-inline-flex flex-wrap justify-content-end gap-1">
-                                    <a class="btn btn-outline-primary btn-sm" href="/cliente/citas/detalle/1">Ver</a>
-                                    <a class="btn btn-outline-warning btn-sm" href="/cliente/citas/editar/1">Editar</a>
-                                    <a class="btn btn-outline-danger btn-sm" href="/cliente/citas/cancelar/1">Cancelar</a>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="ps-3">C-002</td>
-                            <td>Michi</td>
-                            <td>Vacunación</td>
-                            <td>07/11/2026, 03:30 p. m.</td>
-                            <td>Surco</td>
-                            <td><span class="badge bg-warning text-dark">Pendiente</span></td>
-                            <td class="text-end pe-3">
-                                <div class="d-inline-flex flex-wrap justify-content-end gap-1">
-                                    <a class="btn btn-outline-primary btn-sm" href="/cliente/citas/detalle/2">Ver</a>
-                                    <a class="btn btn-outline-warning btn-sm" href="/cliente/citas/editar/2">Editar</a>
-                                    <a class="btn btn-outline-danger btn-sm" href="/cliente/citas/cancelar/2">Cancelar</a>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            @if (cargando)
+            {
+                <div class="alert alert-info m-3">Cargando citas...</div>
+            }
+            else if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger m-3">@mensajeError</div>
+            }
+            else if (listaCitas.Count == 0)
+            {
+                <div class="alert alert-info m-3">No tienes citas registradas.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Código</th>
+                                <th>Mascota</th>
+                                <th>Motivo</th>
+                                <th>Fecha y hora</th>
+                                <th>Estado</th>
+                                <th class="text-end pe-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cita in listaCitas)
+                            {
+                                <tr>
+                                    <td class="ps-3">@($"C-{cita.CitaId:D3}")</td>
+                                    <td>@cita.NombreMascota</td>
+                                    <td>@cita.Motivo</td>
+                                    <td>@cita.FechaHoraInicio.ToString("dd/MM/yyyy, HH:mm")</td>
+                                    <td>
+                                        <span class="badge @ObtenerColorEstado(cita.Estado)">
+                                            @cita.Estado
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               href="@($"/cliente/citas/detalle/{cita.CitaId}")">
+                                                Ver
+                                            </a>
+                                            @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
+                                            {
+                                                <a class="btn btn-outline-warning btn-sm"
+                                                   href="@($"/cliente/citas/editar/{cita.CitaId}")">
+                                                    Editar
+                                                </a>
+                                                <a class="btn btn-outline-danger btn-sm"
+                                                   href="@($"/cliente/citas/cancelar/{cita.CitaId}")">
+                                                    Cancelar
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 </div>
+
+@code {
+    private List<Cita> listaCitas = new();
+    private bool cargando = true;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        mensajeError = "";
+
+        try
+        {
+            // Identificar al cliente que inició sesión.
+            var estado = await AuthStateProvider.GetAuthenticationStateAsync();
+            var usuario = estado.User;
+            string? idTexto = usuario.FindFirst("UsuarioId")?.Value;
+
+            if (usuario.Identity?.IsAuthenticated != true ||
+                !int.TryParse(idTexto, out int usuarioId))
+            {
+                mensajeError = "No se pudo identificar al cliente que inició sesión.";
+                return;
+            }
+
+            // Reutilizar el servicio de mascotas del proyecto.
+            var mascotas = await MascotaService.ObtenerMascotasPorClienteAsync(usuarioId);
+            
+            var tareas = mascotas.Select(async mascota =>
+            {
+                var citasMascota = await CitaService
+                    .ListarPorMascotaAsync(mascota.MascotaId);
+
+                foreach (var cita in citasMascota)
+                {
+                    cita.NombreMascota = mascota.Nombre;
+                }
+
+                return citasMascota;
+            });
+
+            var resultados = await Task.WhenAll(tareas);
+
+            listaCitas = resultados
+                .SelectMany(citas => citas)
+                .OrderByDescending(c => c.FechaHoraInicio)
+                .ToList();
+
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "No se pudieron cargar las citas: " + ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string ObtenerColorEstado(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "CONFIRMADA" => "bg-success",
+            "PROGRAMADA" => "bg-primary",
+            "ATENDIDA" => "bg-secondary",
+            "CANCELADA" => "bg-danger",
+            "NO_ASISTIO" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -58,7 +58,8 @@ namespace Mimados_WebApp.Services.ServicioService
                 nombre = servicio.Nombre,
                 descripcion = servicio.Descripcion,
                 precioReferencial = servicio.PrecioReferencial,
-                duracionMinutos = servicio.DuracionMinutos
+                duracionMinutos = servicio.DuracionMinutos,
+                activo = servicio.Activo
             };
 
             var response = await _http.PutAsJsonAsync($"ServicioRS", datos);

@@ -53,6 +53,7 @@ namespace Mimados_WebApp.Services.SedeService
                 nombre = sede.Nombre,
                 direccion = sede.Direccion,
                 telefono = sede.Telefono
+                
             };
 
 
@@ -74,7 +75,8 @@ namespace Mimados_WebApp.Services.SedeService
                 id = sede.Id,
                 nombre = sede.Nombre,
                 direccion = sede.Direccion,
-                telefono = sede.Telefono
+                telefono = sede.Telefono,
+                activo = sede.Activo
             };
 
             var response = await _http.PutAsJsonAsync($"SedeRS", datos);

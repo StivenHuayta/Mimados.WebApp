@@ -1,118 +1,351 @@
 @page "/cliente/citas/editar/{Id:int}"
 @rendermode InteractiveServer
 
+@using Mimados_WebApp.Models
+@using Mimados_WebApp.Services
+@using Mimados_WebApp.Services.CitaServices
+
+@inject ICitaService CitaService
+
 <PageTitle>Editar Cita - Mimados</PageTitle>
 
 <div class="container mt-4" style="max-width: 800px;">
+
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h2 class="mb-0">Modificar Cita</h2>
-        <a class="btn btn-secondary" href="@($"/cliente/citas/detalle/{Id}")"><i class="bi bi-arrow-left me-1"></i> Volver al detalle</a>
+
+        <a class="btn btn-secondary"
+           href="@($"/cliente/citas/detalle/{Id}")">
+            <i class="bi bi-arrow-left me-1"></i>
+            Volver al detalle
+        </a>
     </div>
 
-    @if (CitaNoEncontrada)
+    @if (cargando)
     {
-        <div class="alert alert-warning" role="alert">No se encontró la cita solicitada.</div>
+        <div class="alert alert-info">
+            Cargando información de la cita...
+        </div>
+    }
+    else if (cita == null)
+    {
+        <div class="alert alert-warning">
+            No se encontró la cita solicitada.
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger">
+                @mensajeError
+            </div>
+        }
     }
     else
     {
         <div class="card p-4 shadow-sm border-0 bg-light">
+
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h5 class="fw-bold mb-0"><i class="bi bi-pencil-square text-success me-2"></i>Editar datos de la cita @Codigo</h5>
-                <span class="badge @(Id == 2 ? "bg-warning text-dark" : "bg-success")">@(Id == 2 ? "Pendiente" : "Confirmada")</span>
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-success me-2"></i>
+                    Editar datos de la cita @($"C-{cita.CitaId:D3}")
+                </h5>
+
+                <span class="badge @ObtenerColorEstado(cita.Estado)">
+                    @cita.Estado
+                </span>
             </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="editar-mascota" class="form-label fw-bold">Mascota:</label>
-                    <select id="editar-mascota" class="form-select" @bind="mascota">
-                        <option value="Firulais">Firulais</option>
-                        <option value="Michi">Michi</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="editar-sede" class="form-label fw-bold">Sede:</label>
-                    <select id="editar-sede" class="form-select" @bind="sede">
-                        <option value="San Miguel">San Miguel</option>
-                        <option value="Surco">Surco</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="editar-servicio" class="form-label fw-bold">Servicio:</label>
-                    <select id="editar-servicio" class="form-select" @bind="servicio">
-                        <option value="Consulta general">Consulta general</option>
-                        <option value="Vacunación">Vacunación</option>
-                        <option value="Control veterinario">Control veterinario</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="editar-veterinario" class="form-label fw-bold">Veterinario:</label>
-                    <select id="editar-veterinario" class="form-select" @bind="veterinario">
-                        <option value="Dra. Ana Torres">Dra. Ana Torres</option>
-                        <option value="Dr. Luis Ramírez">Dr. Luis Ramírez</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="editar-fecha" class="form-label fw-bold">Fecha de la cita:</label>
-                    <input id="editar-fecha" class="form-control" type="date" @bind="fecha" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="editar-hora" class="form-label fw-bold">Horario:</label>
-                    <select id="editar-hora" class="form-select" @bind="hora">
-                        <option value="09:00">09:00 a. m.</option>
-                        <option value="10:00">10:00 a. m.</option>
-                        <option value="11:30">11:30 a. m.</option>
-                        <option value="15:30">03:30 p. m.</option>
-                    </select>
-                </div>
-            </div>
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
-                <a href="/cliente/citas/disponibilidad" class="btn btn-outline-primary">Ver disponibilidad</a>
-                <button type="button" class="btn btn-warning fw-bold px-4" @onclick="GuardarCambios"><i class="bi bi-pencil-square me-1"></i> Guardar Cambios</button>
-            </div>
+
             @if (cambiosGuardados)
             {
-                <div class="alert alert-success mt-3 mb-0" role="status">Cambios guardados correctamente. <a class="alert-link" href="/cliente/citas">Volver a Mis Citas</a></div>
+                <div class="alert alert-success">
+                    Cita modificada correctamente.
+
+                    <a class="alert-link ms-1"
+                       href="/cliente/citas">
+                        Volver a Mis Citas
+                    </a>
+                </div>
             }
+            else if (!PuedeEditar())
+            {
+                <div class="alert alert-warning">
+                    Esta cita no puede modificarse debido a su estado.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+
+                    <!-- Mascota -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            Mascota:
+                        </label>
+
+                        <input class="form-control"
+                               value="@($"Mascota ID {cita.MascotaId}")"
+                               disabled />
+                    </div>
+
+                    <!-- Empleado -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            Veterinario / Empleado:
+                        </label>
+
+                        <input class="form-control"
+                               value="@($"Empleado ID {cita.EmpleadoId}")"
+                               disabled />
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            Fecha de la cita:
+                        </label>
+
+                        <input type="date"
+                               class="form-control"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               @bind="fecha" />
+                    </div>
+
+                    <!-- Hora -->
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Hora (24 h):</label>
+                            <select class="form-select" @bind="Hora24">
+                                @for (int i = 0; i < 24; i++)
+                                {
+                                    <option value="@i">@($"{i:00}")</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">Minutos:</label>
+                            <select class="form-select" @bind="Minuto">
+                                @for (int i = 0; i < 60; i += 5)
+                                {
+                                    <option value="@i">@($"{i:00}")</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <small class="text-muted">
+                        Hora seleccionada (24 h):
+                        @(hora?.ToString("HH:mm") ?? "--:--")
+                    </small>
+
+
+                    <!-- Duración definida por la clínica -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            Duración de la cita:
+                        </label>
+
+                        <input class="form-control"
+                               value="30 minutos"
+                               readonly />
+                        <small class="text-muted">
+                            Duración establecida por la clínica.
+                        </small>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label fw-bold">
+                            Motivo de la cita:
+                        </label>
+
+                        <textarea class="form-control"
+                                  rows="3"
+                                  maxlength="255"
+                                  @bind="motivo"></textarea>
+                    </div>
+
+                </div>
+
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger mt-2">
+                        @mensajeError
+                    </div>
+                }
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+
+                    <a href="/cliente/citas"
+                       class="btn btn-secondary">
+                        Cancelar edición
+                    </a>
+
+                    <button type="button"
+                            class="btn btn-warning fw-bold px-4"
+                            disabled="@procesando"
+                            @onclick="GuardarCambios">
+
+                        <i class="bi bi-pencil-square me-1"></i>
+                        @(procesando ? "Guardando..." : "Guardar Cambios")
+                    </button>
+
+                </div>
+            }
+
         </div>
     }
 </div>
 
 @code {
-    [Parameter] public int Id { get; set; }
 
-    private string Codigo => $"C-{Id:000}";
-    private bool CitaNoEncontrada => Id != 1 && Id != 2;
-    private bool cambiosGuardados;
+    [Parameter]
+    public int Id { get; set; }
 
-    private string mascota = "";
-    private string sede = "";
-    private string servicio = "";
-    private string veterinario = "";
-    private DateTime? fecha;
-    private string hora = "";
+    private Cita? cita;
 
-    protected override void OnParametersSet()
+    private DateTime fecha = DateTime.Today;
+    private TimeOnly? hora;
+    private const int DuracionCitaMinutos = 30;
+    private string motivo = "";
+
+    private bool cargando = true;
+    private bool procesando = false;
+    private bool cambiosGuardados = false;
+
+    private string mensajeError = "";
+
+    // Obtener datos reales de la cita
+    protected override async Task OnParametersSetAsync()
     {
-        // Los campos muestran los valores de la reserva seleccionada.
+        cargando = true;
+        mensajeError = "";
         cambiosGuardados = false;
-        if (Id == 1)
+        cita = null;
+
+        try
         {
-            mascota = "Firulais";
-            sede = "San Miguel";
-            servicio = "Consulta general";
-            veterinario = "Dra. Ana Torres";
-            fecha = new DateTime(2026, 11, 4);
-            hora = "10:00";
+            cita = await CitaService.ObtenerPorIdAsync(Id);
+
+            if (cita != null)
+            {
+                fecha = cita.FechaHoraInicio.Date;
+                hora = TimeOnly.FromDateTime(cita.FechaHoraInicio);
+
+                motivo = cita.Motivo ?? "";
+            }
         }
-        else if (Id == 2)
+        catch (Exception ex)
         {
-            mascota = "Michi";
-            sede = "Surco";
-            servicio = "Vacunación";
-            veterinario = "Dr. Luis Ramírez";
-            fecha = new DateTime(2026, 11, 7);
-            hora = "15:30";
+            mensajeError = "Error al consultar la cita: " + ex.Message;
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 
-    private void GuardarCambios() => cambiosGuardados = true;
+    // Validar si la cita puede editarse
+    private bool PuedeEditar()
+    {
+        return cita != null &&
+            (cita.Estado == "PROGRAMADA" ||
+             cita.Estado == "CONFIRMADA");
+    }
+
+    // Guardar cambios mediante REST
+    private async Task GuardarCambios()
+    {
+        if (procesando || !PuedeEditar())
+            return;
+
+        mensajeError = "";
+
+        if (!hora.HasValue)
+        {
+            mensajeError = "Debe seleccionar una hora.";
+            return;
+        }
+
+        DateTime fechaInicio =
+            fecha.Date.Add(hora.Value.ToTimeSpan());
+
+        if (fechaInicio <= DateTime.Now)
+        {
+            mensajeError = "La fecha y hora deben ser futuras.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(motivo))
+        {
+            mensajeError = "Debe ingresar el motivo de la cita.";
+            return;
+        }
+
+        DateTime fechaFin =
+            fechaInicio.AddMinutes(DuracionCitaMinutos);
+
+        Cita citaActualizada = new Cita
+        {
+            CitaId = Id,
+            EmpleadoId = cita!.EmpleadoId,
+            MascotaId = cita.MascotaId,
+            FechaHoraInicio = fechaInicio,
+            FechaHoraFin = fechaFin,
+            Estado = cita.Estado,
+            Motivo = motivo.Trim()
+        };
+
+        procesando = true;
+
+        try
+        {
+            bool resultado = await CitaService.ModificarAsync(citaActualizada);
+
+            if (resultado)
+            {
+                cita = citaActualizada;
+                cambiosGuardados = true;
+            }
+            else
+            {
+                mensajeError = "No se pudo modificar la cita.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "Error al modificar la cita: " + ex.Message;
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private string ObtenerColorEstado(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "PROGRAMADA" => "bg-primary",
+            "CONFIRMADA" => "bg-success",
+            "ATENDIDA" => "bg-secondary",
+            "CANCELADA" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    
+    private int Hora24
+    {
+        get => hora?.Hour ?? 10;
+        set => hora = new TimeOnly(value, hora?.Minute ?? 0);
+    }
+
+    private int Minuto
+    {
+        get => hora?.Minute ?? 0;
+        set => hora = new TimeOnly(hora?.Hour ?? 10, value);
+    }
+
 }

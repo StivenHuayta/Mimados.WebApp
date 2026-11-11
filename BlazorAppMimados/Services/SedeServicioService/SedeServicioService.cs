@@ -40,5 +40,33 @@ namespace Mimados_WebApp.Services.SedeServicioService
                 return response.IsSuccessStatusCode;
             
         }
+        public async Task<List<Servicio>> ObtenerServiciosDisponiblesAsync(int sedeid)
+        {
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>(
+            $"SedeServicioRS/listarServiciosDisponibles/{sedeid}");
+            return respuesta?.Data;
+        }
+        public async Task<bool> CrearSedeServicioAsync(SedeServicio sedeServicio)
+        {
+            var datos = new
+            {
+                id_sede = sedeServicio.Sede.Id,
+                id_servicio = sedeServicio.Servicio.Id
+               
+
+            };
+
+
+            var response = await _http.PostAsJsonAsync("SedeServicioRS/registrar", datos);
+
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            var resultado = await response.Content
+                .ReadFromJsonAsync<ApiResponse<object>>();
+
+            return resultado?.Success == true;
+
+        }
     }
 }
