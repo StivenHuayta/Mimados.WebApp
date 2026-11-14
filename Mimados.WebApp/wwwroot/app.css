@@ -482,6 +482,10 @@ body.sidebar-collapse .sidebar-collapse-icon {
     border-top-right-radius: 12px !important;
 }
 
+.card-header.d-flex::after {
+    display: none;
+}
+
 .card-header.bg-primary {
     background-color: var(--mimados-primary) !important;
     border-bottom-color: var(--mimados-primary-hover) !important;
@@ -624,4 +628,42 @@ body.sidebar-collapse .sidebar-collapse-icon {
 .form-floating > .form-control-plaintext:focus::placeholder,
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+.mascota-card {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mascota-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 91, 181, 0.10) !important;
+    border-color: var(--mimados-primary-border) !important;
+}
+
+.btn-card-menu {
+    background-color: #FFFFFF;
+    border: 1.5px solid #1E293B;
+    box-shadow: none;
+    outline: none;
+    color: #1E293B;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-card-menu:hover,
+.btn-card-menu:focus {
+    background-color: var(--mimados-bg-subtle);
+    border-color: #0F172A;
+    color: #0F172A;
+    outline: none;
+    box-shadow: none;
 }

@@ -5,12 +5,10 @@
 @using Mimados.WebApp.Models
 @inject IMascotaService MascotaService
 
-
 <div class="container mt-4">
-    
     @* Cabecera con título y botón de acción principal *@
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Mis Mascotas</h2>
+        <h2 class="mb-0">Mis Mascotas</h2>
         <button class="btn btn-primary" @onclick="IrANuevaMascota">
             + Registrar Nueva Mascota
         </button>
@@ -18,8 +16,6 @@
 
     @* Grilla de Tarjetas usando Bootstrap *@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        
-    
         @if (listaMascotas == null)
         {
             <div class="col-12">
@@ -36,133 +32,289 @@
         {
             @foreach (var mascota in listaMascotas)
             {
+                bool tieneAtenciones = mascotasConAtenciones.Contains(mascota.MascotaId);
+                bool menuAbierto = menuAbiertoMascotaId == mascota.MascotaId;
+
                 <div class="col">
-                    <div class="card h-100 shadow-sm border-0 bg-white">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                           
-                            <h5 class="mb-0 fw-bold text-white">
+                    <div class="card h-100 shadow-sm bg-white mascota-card" @onclick="() => IrAHistorial(mascota.MascotaId)">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center gap-2 px-3 py-3">
+                            <h5 class="mb-0 fw-bold text-white text-truncate">
                                 @mascota.Nombre
-                                
-                               @if (!mascota.Activo)
-                                {
-                                  <span class="badge badge-mimados-danger ms-2" style="font-size: 0.6em;">Inactivo</span>
-                                }
-                            
-                            
                             </h5>
+                            <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0" @onclick:stopPropagation="true">
+                                <span class="badge bg-white text-primary">@mascota.Especie</span>
 
+                                <div class="dropdown position-relative d-inline-flex align-items-center">
+                                    <button type="button"
+                                            class="btn-card-menu"
+                                            aria-label="Opciones de @mascota.Nombre"
+                                            @onclick="() => AlternarMenu(mascota.MascotaId)">
+                                        <i class="bi bi-three-dots-vertical fs-5"></i>
+                                    </button>
 
-                            <span class="badge bg-white text-primary">@mascota.Especie</span>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-1"><strong>Raza:</strong> @mascota.Raza</p>
-                            <p class="mb-1"><strong>Sexo:</strong> @mascota.Sexo</p>
-                            <p class="mb-1"><strong>Nacimiento:</strong> @(mascota.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "No registrado")</p>
-                            <p class="mb-3"><strong>Peso ref:</strong> @mascota.PesoReferencial kg</p>
-                            
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary btn-sm fw-semibold" @onclick="() => IrAHistorial(mascota.MascotaId)">
-                                    <i class="bi bi-journal-medical me-1"></i> Ver Historial
-                                </button>
+                                    @if (menuAbierto)
+                                    {
+                                        <ul class="dropdown-menu dropdown-menu-end show shadow-sm" style="position: absolute; right: 0; top: 100%; z-index: 1050;">
+                                            <li>
+                                                <button type="button" class="dropdown-item" @onclick="() => EditarDesdeMenu(mascota.MascotaId)">
+                                                    <i class="bi bi-pencil me-2 text-primary"></i>Editar
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li>
+                                                @if (tieneAtenciones)
+                                                {
+                                                    <span class="dropdown-item text-muted disabled" title="No se puede dar de baja porque tiene atenciones registradas">
+                                                        <i class="bi bi-lock me-2"></i>Dar de baja (con atenciones)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="dropdown-item text-danger" @onclick="() => SolicitarEliminacionDesdeMenu(mascota)">
+                                                        <i class="bi bi-trash me-2"></i>Dar de baja
+                                                    </button>
+                                                }
+                                            </li>
+                                        </ul>
+                                    }
+                                </div>
                             </div>
                         </div>
-                        <div class="card-footer bg-white border-top d-flex justify-content-between py-2">
-                            <button class="btn btn-outline-secondary btn-sm fw-semibold" @onclick="() => IrAEditarMascota(mascota.MascotaId)">
-                                Editar
-                            </button>
-                            @* Agregamos el evento onclick para ejecutar el método de eliminar *@
-                            <button class="btn btn-outline-danger btn-sm fw-semibold" @onclick="() => EliminarMascota(mascota.MascotaId)">
-                                Eliminar
-                            </button>
+
+                        <div class="card-body d-flex flex-column">
+                            <p class="mb-1"><strong>Raza:</strong> @(string.IsNullOrWhiteSpace(mascota.Raza) ? "No registrada" : mascota.Raza)</p>
+                            <p class="mb-1"><strong>Sexo:</strong> @mascota.Sexo</p>
+                            <p class="mb-1">
+                                <strong>Edad:</strong> @FormatearEdad(mascota.FechaNacimiento)
+                                @if (mascota.FechaNacimiento.HasValue)
+                                {
+                                    <span class="text-muted small ms-1">(@mascota.FechaNacimiento.Value.ToString("dd/MM/yyyy"))</span>
+                                }
+                            </p>
+                            <p class="mb-3"><strong>Último peso:</strong> @(mascota.PesoReferencial.HasValue ? $"{mascota.PesoReferencial.Value:0.0} kg" : "No registrado")</p>
+
+                            <div class="mt-auto d-grid">
+                                <button type="button"
+                                        class="btn btn-primary btn-sm fw-semibold"
+                                        @onclick:stopPropagation="true"
+                                        @onclick="() => IrAHistorial(mascota.MascotaId)">
+                                    <i class="bi bi-journal-medical me-1"></i> Ver Ficha / Historial
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             }
         }
-       
-
     </div>
+
+    @if (mostrarModalEliminar && mascotaAEliminar != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fw-bold text-white">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>¿Dar de baja a @mascotaAEliminar.Nombre?
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" @onclick="CancelarEliminacion" disabled="@eliminando"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-2">
+                            Estás a punto de dar de baja a <strong>@mascotaAEliminar.Nombre</strong> (@mascotaAEliminar.Especie).
+                        </p>
+                        <div class="alert alert-danger small mb-0">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            <strong>Advertencia:</strong> La mascota se eliminará permanentemente junto con todos sus datos e historial. Esta acción no se puede deshacer.
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white">
+                        <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion" disabled="@eliminando">Cancelar</button>
+                        <button type="button" class="btn btn-danger fw-semibold" @onclick="ConfirmarEliminacion" disabled="@eliminando">
+                            @(eliminando ? "Eliminando..." : "Sí, dar de baja")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
-
-@code{
-
+@code {
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
     private List<Mimados.WebApp.Models.Mascota>? listaMascotas;
-    private int idClienteLogueado = 0; // Variable para almacenar el ID del cliente logueado
+    private HashSet<int> mascotasConAtenciones = new();
+    private int idClienteLogueado = 0;
 
-        protected override async Task OnInitializedAsync()
+    private int? menuAbiertoMascotaId;
+    private Mimados.WebApp.Models.Mascota? mascotaAEliminar;
+    private bool mostrarModalEliminar = false;
+    private bool eliminando = false;
+
+    protected override async Task OnInitializedAsync()
     {
-
         var authState = await AuthenticationStateTask;
         var user = authState.User;
 
-
         if (user.Identity is not null && user.Identity.IsAuthenticated)
         {
-            // 3. Buscamos el claim que contiene el ID.
-            // Usualmente .NET lo guarda como NameIdentifier o lo puedes haber llamado "UsuarioId"
             var claimId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                           ?? user.FindFirst("UsuarioId")?.Value;
 
             if (int.TryParse(claimId, out int clienteId))
             {
                 idClienteLogueado = clienteId;
-                // 4. Ejecutamos tu servicio con el ID dinámico
                 listaMascotas = await MascotaService.ObtenerMascotasPorClienteAsync(idClienteLogueado);
+                await CargarAtencionesPorMascotaAsync();
             }
             else
             {
-                // Si por alguna razón el ID del claim no es numérico, devolvemos lista vacía
                 listaMascotas = new List<Mimados.WebApp.Models.Mascota>();
             }
         }
         else
         {
-            // Opcional: Si no está logueado, podrías usar Nav.NavigateTo("/login")
             listaMascotas = new List<Mimados.WebApp.Models.Mascota>();
         }
     }
 
-
-    private async Task EliminarMascota(int id)
+    private async Task CargarAtencionesPorMascotaAsync()
     {
-        // 1. ACTUALIZACIÓN OPTIMISTA: Borramos la mascota de la vista inmediatamente
-        var mascotaAEliminar = listaMascotas?.FirstOrDefault(m => m.MascotaId == id);
-        if (mascotaAEliminar != null)
-        {
-            listaMascotas!.Remove(mascotaAEliminar);
-        }
+        mascotasConAtenciones.Clear();
+        if (listaMascotas == null || listaMascotas.Count == 0) return;
 
-        // 2. Enviamos la orden de eliminación a Java/MySQL en segundo plano
-        bool exito = await MascotaService.EliminarMascotaAsync(id);
-
-        // 3. Manejo de fallos: Si la API diera un error (ej. se cae el internet),
-        // volvemos a descargar la lista real para corregir la pantalla.
-        if (!exito && idClienteLogueado > 0)
+        var tareas = listaMascotas.Select(async m =>
         {
-            
-            listaMascotas = await MascotaService.ObtenerMascotasPorClienteAsync(idClienteLogueado);
+            var historial = await MascotaService.ObtenerHistorialAsync(m.MascotaId);
+            return (m.MascotaId, TieneAtenciones: historial.Count > 0);
+        });
+
+        var resultados = await Task.WhenAll(tareas);
+        foreach (var item in resultados)
+        {
+            if (item.TieneAtenciones)
+            {
+                mascotasConAtenciones.Add(item.MascotaId);
+            }
         }
     }
 
+    private static string FormatearEdad(DateTime? fechaNacimiento)
+    {
+        if (!fechaNacimiento.HasValue)
+            return "No registrado";
 
-public void IrANuevaMascota()
+        var nacimiento = fechaNacimiento.Value.Date;
+        var hoy = DateTime.Today;
+
+        if (nacimiento > hoy)
+            return "No registrado";
+
+        int anios = hoy.Year - nacimiento.Year;
+        int meses = hoy.Month - nacimiento.Month;
+        int dias = hoy.Day - nacimiento.Day;
+
+        if (dias < 0)
+        {
+            meses--;
+            var mesAnterior = hoy.AddMonths(-1);
+            dias += DateTime.DaysInMonth(mesAnterior.Year, mesAnterior.Month);
+        }
+
+        if (meses < 0)
+        {
+            anios--;
+            meses += 12;
+        }
+
+        if (anios > 0)
+        {
+            string textoAnios = $"{anios} {(anios == 1 ? "año" : "años")}";
+            return meses > 0
+                ? $"{textoAnios} y {meses} {(meses == 1 ? "mes" : "meses")}"
+                : textoAnios;
+        }
+
+        if (meses > 0)
+        {
+            return $"{meses} {(meses == 1 ? "mes" : "meses")}";
+        }
+
+        if (dias == 0)
+            return "Recién nacido";
+
+        return $"{dias} {(dias == 1 ? "día" : "días")} de nacido";
+    }
+
+    private void AlternarMenu(int mascotaId)
+    {
+        menuAbiertoMascotaId = menuAbiertoMascotaId == mascotaId ? null : mascotaId;
+    }
+
+    private void EditarDesdeMenu(int id)
+    {
+        menuAbiertoMascotaId = null;
+        IrAEditarMascota(id);
+    }
+
+    private void SolicitarEliminacionDesdeMenu(Mimados.WebApp.Models.Mascota mascota)
+    {
+        menuAbiertoMascotaId = null;
+        if (mascotasConAtenciones.Contains(mascota.MascotaId)) return;
+        mascotaAEliminar = mascota;
+        mostrarModalEliminar = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        if (eliminando) return;
+        mostrarModalEliminar = false;
+        mascotaAEliminar = null;
+    }
+
+    private async Task ConfirmarEliminacion()
+    {
+        if (mascotaAEliminar == null || eliminando) return;
+
+        eliminando = true;
+        int id = mascotaAEliminar.MascotaId;
+
+        try
+        {
+            bool exito = await MascotaService.EliminarMascotaAsync(id);
+            if (exito)
+            {
+                listaMascotas?.RemoveAll(m => m.MascotaId == id);
+            }
+            else if (idClienteLogueado > 0)
+            {
+                listaMascotas = await MascotaService.ObtenerMascotasPorClienteAsync(idClienteLogueado);
+                await CargarAtencionesPorMascotaAsync();
+            }
+        }
+        finally
+        {
+            eliminando = false;
+            mostrarModalEliminar = false;
+            mascotaAEliminar = null;
+        }
+    }
+
+    public void IrANuevaMascota()
     {
         Nav.NavigateTo("/cliente/mascotas/nueva");
     }
+
     public void IrAEditarMascota(int id)
     {
         Nav.NavigateTo($"/cliente/mascotas/editar/{id}");
-
     }
-
 
     private void IrAHistorial(int id)
     {
+        menuAbiertoMascotaId = null;
         Nav.NavigateTo($"/cliente/mascotas/{id}/historial");
     }
-
-
 }
