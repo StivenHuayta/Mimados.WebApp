@@ -1,10 +1,9 @@
 ﻿@page "/cliente/mascotas"
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject NavigationManager Nav
-@attribute [Authorize]
 
 @using Mimados.WebApp.Models
-@inject Mimados.WebApp.Services.IMascotaService MascotaService
+@inject IMascotaService MascotaService
 
 
 <div class="container mt-4">
@@ -12,7 +11,7 @@
     @* Cabecera con título y botón de acción principal *@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Mis Mascotas</h2>
-        <button class="btn btn-success" @onclick="IrANuevaMascota">
+        <button class="btn btn-primary" @onclick="IrANuevaMascota">
             + Registrar Nueva Mascota
         </button>
     </div>
@@ -24,7 +23,7 @@
         @if (listaMascotas == null)
         {
             <div class="col-12">
-                <div class="alert alert-info">Cargando tus mascotas desde el servidor...</div>
+                <div class="alert alert-info">Cargando tus mascotas...</div>
             </div>
         }
         else if (!listaMascotas.Any())
@@ -38,22 +37,22 @@
             @foreach (var mascota in listaMascotas)
             {
                 <div class="col">
-                    <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card h-100 shadow-sm border-0 bg-white">
                         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                            
-                            <h5 class="mb-0 fw-bold">
+                            <h5 class="mb-0 fw-bold text-white">
                                 @mascota.Nombre
                                 
                                @if (!mascota.Activo)
                                 {
-                                  <span class="badge bg-danger ms-2" style="font-size: 0.6em;">Inactivo</span>
+                                  <span class="badge badge-mimados-danger ms-2" style="font-size: 0.6em;">Inactivo</span>
                                 }
                             
                             
                             </h5>
 
 
-                            <span class="badge bg-light text-primary">@mascota.Especie</span>
+                            <span class="badge bg-white text-primary">@mascota.Especie</span>
                         </div>
                         <div class="card-body">
                             <p class="mb-1"><strong>Raza:</strong> @mascota.Raza</p>
@@ -62,17 +61,17 @@
                             <p class="mb-3"><strong>Peso ref:</strong> @mascota.PesoReferencial kg</p>
                             
                             <div class="d-grid gap-2">
-                                <button class="btn btn-info btn-sm" @onclick="() => IrAHistorial(mascota.MascotaId)">
-                                    <i class="bi bi-journal-medical"></i> Ver Historial
+                                <button class="btn btn-outline-primary btn-sm fw-semibold" @onclick="() => IrAHistorial(mascota.MascotaId)">
+                                    <i class="bi bi-journal-medical me-1"></i> Ver Historial
                                 </button>
                             </div>
                         </div>
-                        <div class="card-footer bg-white border-top-0 d-flex justify-content-between pb-3">
-                            <button class="btn btn-warning btn-sm text-dark fw-bold" @onclick="() => IrAEditarMascota(mascota.MascotaId)">
+                        <div class="card-footer bg-white border-top d-flex justify-content-between py-2">
+                            <button class="btn btn-outline-secondary btn-sm fw-semibold" @onclick="() => IrAEditarMascota(mascota.MascotaId)">
                                 Editar
                             </button>
                             @* Agregamos el evento onclick para ejecutar el método de eliminar *@
-                            <button class="btn btn-danger btn-sm fw-bold" @onclick="() => EliminarMascota(mascota.MascotaId)">
+                            <button class="btn btn-outline-danger btn-sm fw-semibold" @onclick="() => EliminarMascota(mascota.MascotaId)">
                                 Eliminar
                             </button>
                         </div>
@@ -107,8 +106,9 @@
             var claimId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                           ?? user.FindFirst("UsuarioId")?.Value;
 
-            if (int.TryParse(claimId, out int idClienteLogueado))
+            if (int.TryParse(claimId, out int clienteId))
             {
+                idClienteLogueado = clienteId;
                 // 4. Ejecutamos tu servicio con el ID dinámico
                 listaMascotas = await MascotaService.ObtenerMascotasPorClienteAsync(idClienteLogueado);
             }

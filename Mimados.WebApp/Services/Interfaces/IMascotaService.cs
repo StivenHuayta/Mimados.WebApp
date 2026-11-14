@@ -1,4 +1,4 @@
-﻿namespace Mimados.WebApp.Services;
+namespace Mimados.WebApp.Services.Interfaces;
 using Mimados.WebApp.Models;
 
 
@@ -11,5 +11,6 @@ using Mimados.WebApp.Models;
     Task<bool> ActualizarMascotaAsync(Mascota mascota);
     Task<bool> EliminarMascotaAsync(int mascotaId);
     Task<List<RegistroMedico>> ObtenerHistorialAsync(int mascotaId);
+    string ObtenerUrlPdfHistorial(int mascotaId);
 }
 

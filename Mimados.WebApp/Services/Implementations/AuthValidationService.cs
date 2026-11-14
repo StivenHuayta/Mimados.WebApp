@@ -1,12 +1,13 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Mimados.WebApp.Models;
+using Mimados.WebApp.Services.Interfaces;
 
-namespace Mimados.WebApp.Services;
+namespace Mimados.WebApp.Services.Implementations;
 
 /// <summary>
-/// Servicio de autenticación y registro que consume el servicio REST del backend Java (UsuarioRS).
+/// Servicio de autenticación y registro que consume el servicio REST de usuarios.
 /// </summary>
 public class AuthValidationService : IAuthValidationService
 {
@@ -30,7 +31,7 @@ public class AuthValidationService : IAuthValidationService
             return new AuthValidationResult
             {
                 Exito = false,
-                MensajeError = "Por favor ingrese su usuario o correo y contraseña."
+                MensajeError = "Por favor, ingresa tu correo y contraseña."
             };
         }
 
@@ -44,7 +45,6 @@ public class AuthValidationService : IAuthValidationService
         };
 
         HttpResponseMessage? response = null;
-        string? lastError = null;
 
         foreach (var url in endpoints)
         {
@@ -67,19 +67,17 @@ public class AuthValidationService : IAuthValidationService
             }
             catch (Exception ex)
             {
-                lastError = ex.Message;
-                _logger.LogDebug(ex, "Intento de conexión a {Url} no exitoso", url);
+                _logger.LogWarning(ex, "Intento de conexión a {Url} no exitoso", url);
             }
         }
 
         if (response == null)
         {
+            _logger.LogError("No se pudo conectar con el servicio de autenticación.");
             return new AuthValidationResult
             {
                 Exito = false,
-                MensajeError = $"No se pudo conectar con el servicio Java REST ({PATH}). " +
-                               $"Asegúrese de que el backend Java esté desplegado y corriendo en GlassFish (puerto 8080). " +
-                               $"(Detalle: {lastError ?? "Servicio no disponible"})"
+                MensajeError = "No se pudo conectar con el sistema en este momento. Inténtalo nuevamente en unos minutos."
             };
         }
 
@@ -89,22 +87,13 @@ public class AuthValidationService : IAuthValidationService
 
             if (string.IsNullOrWhiteSpace(contentString) || contentString.TrimStart().StartsWith("<"))
             {
-                _logger.LogError("El backend Java REST devolvió HTML en lugar de JSON (Código {StatusCode}): {Body}",
+                _logger.LogError("El servicio de autenticación devolvió una respuesta HTML inesperada (Código {StatusCode}): {Body}",
                     (int)response.StatusCode, contentString);
-
-                string mensajeHtml = response.StatusCode switch
-                {
-                    System.Net.HttpStatusCode.InternalServerError =>
-                        "Error interno 500 en el servidor Java REST. Verifique que 'db.properties' esté configurado con la base de datos y que GlassFish tenga acceso a MySQL.",
-                    System.Net.HttpStatusCode.NotFound =>
-                        "El servicio REST no fue encontrado en GlassFish (Código 404). Asegúrese de desplegar mimados-rs como MimadosRS.",
-                    _ => $"El servidor backend Java devolvió una respuesta no válida (Código {(int)response.StatusCode})."
-                };
 
                 return new AuthValidationResult
                 {
                     Exito = false,
-                    MensajeError = mensajeHtml
+                    MensajeError = "Ocurrió un problema temporal en el servidor. Inténtalo nuevamente más tarde."
                 };
             }
 
@@ -137,9 +126,9 @@ public class AuthValidationService : IAuthValidationService
             {
                 mensaje = response.StatusCode switch
                 {
-                    System.Net.HttpStatusCode.Unauthorized => "Credenciales incorrectas o usuario inactivo.",
-                    System.Net.HttpStatusCode.BadRequest => "Datos de inicio de sesión incompletos.",
-                    _ => $"Error del servidor REST ({ (int)response.StatusCode })."
+                    System.Net.HttpStatusCode.Unauthorized => "Correo o contraseña incorrectos.",
+                    System.Net.HttpStatusCode.BadRequest => "Por favor, completa todos los datos para iniciar sesión.",
+                    _ => "No se pudo iniciar sesión en este momento. Inténtalo nuevamente."
                 };
             }
 
@@ -151,20 +140,20 @@ public class AuthValidationService : IAuthValidationService
         }
         catch (JsonException jEx)
         {
-            _logger.LogError(jEx, "Error al deserializar JSON del servicio REST de Java");
+            _logger.LogError(jEx, "Error al deserializar la respuesta del servicio de autenticación");
             return new AuthValidationResult
             {
                 Exito = false,
-                MensajeError = "El servidor Java REST no devolvió un formato JSON válido."
+                MensajeError = "Ocurrió un problema al procesar la respuesta. Inténtalo nuevamente más tarde."
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al procesar respuesta del servicio REST de Java");
+            _logger.LogError(ex, "Error inesperado al procesar la respuesta de autenticación");
             return new AuthValidationResult
             {
                 Exito = false,
-                MensajeError = "Error al procesar la respuesta del servicio de autenticación."
+                MensajeError = "Ocurrió un error inesperado al iniciar sesión. Inténtalo nuevamente."
             };
         }
     }
@@ -173,55 +162,26 @@ public class AuthValidationService : IAuthValidationService
     {
         if (model == null)
         {
-            return (false, "Datos de registro inválidos.");
-        }
-
-        var endpoints = new[]
-        {
-            $"{PATH}/registrarCliente"
-        };
-
-        HttpResponseMessage? response = null;
-        string? lastError = null;
-
-        foreach (var url in endpoints)
-        {
-            try
-            {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(7));
-
-                var jsonContent = new StringContent(
-                    JsonSerializer.Serialize(model),
-                    Encoding.UTF8,
-                    "application/json");
-
-                var res = await _httpClient.PostAsync(url, jsonContent, cts.Token);
-
-                if (res.StatusCode != System.Net.HttpStatusCode.NotFound)
-                {
-                    response = res;
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                lastError = ex.Message;
-                _logger.LogDebug(ex, "Intento de registro en {Url} no exitoso", url);
-            }
-        }
-
-        if (response == null)
-        {
-            return (false, $"No se pudo contactar al servidor REST de Java. {lastError ?? ""}".Trim());
+            return (false, "Por favor, completa los datos del formulario.");
         }
 
         try
         {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(7));
+
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(model),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync($"{PATH}/registrarCliente", jsonContent, cts.Token);
             var contentString = await response.Content.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(contentString) || contentString.TrimStart().StartsWith("<"))
             {
-                return (false, $"El servidor devolvió un error (HTTP {(int)response.StatusCode}). Verifique que la base de datos esté accesible.");
+                _logger.LogError("El servicio de registro devolvió una respuesta no válida (Código {StatusCode})",
+                    (int)response.StatusCode);
+                return (false, "Ocurrió un problema temporal en el servidor. Inténtalo nuevamente más tarde.");
             }
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -229,15 +189,15 @@ public class AuthValidationService : IAuthValidationService
 
             if (response.IsSuccessStatusCode && apiResult != null && apiResult.Success)
             {
-                return (true, apiResult.Message ?? "Cliente registrado con éxito.");
+                return (true, apiResult.Message ?? "Cuenta registrada con éxito.");
             }
 
-            return (false, apiResult?.Message ?? "No se pudo registrar al cliente.");
+            return (false, apiResult?.Message ?? "No se pudo completar el registro. Verifica tus datos.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al procesar registro de cliente");
-            return (false, "Error al procesar la respuesta del servidor.");
+            _logger.LogError(ex, "Error al registrar cliente");
+            return (false, "No se pudo conectar con el sistema en este momento. Inténtalo nuevamente más tarde.");
         }
     }
 }

@@ -2,62 +2,71 @@
 @rendermode InteractiveServer
 
 <AuthorizeView Roles="Admin, Administrador">
-    <Authorized>
+    <Authorized Context="auth">
         <div class="mb-4">
-            <h3 class="m-0 text-dark fw-bold">Panel de Administración</h3>
-            <p class="text-muted">Bienvenido al sistema de gestión de Clínica Veterinaria Mimados.</p>
+            <h3 class="m-0 text-dark fw-bold">Hola @(auth.User.FindFirst("DisplayName")?.Value ?? "Administrador")</h3>
+            <p class="text-muted">Bienvenido al panel de administración de Clínica Veterinaria Mimados.</p>
         </div>
 
         <div class="row g-4">
             <!-- Tarjeta de Empleados -->
-            <div class="col-lg-4 col-6">
-                <div class="card bg-info text-white shadow-sm border-0 h-100">
-                    <div class="card-body">
+            <div class="col-lg-4 col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h3 class="fw-bold mb-0">12</h3>
-                                <p class="mb-0 fs-5">Empleados</p>
+                                <p class="text-muted small text-uppercase fw-semibold mb-1">Personal</p>
+                                <h3 class="fw-bold mb-0 text-dark">12</h3>
+                                <p class="mb-0 text-secondary">Empleados</p>
                             </div>
-                            <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 56px; height: 56px;">
+                                <i class="bi bi-people-fill fs-3"></i>
+                            </div>
                         </div>
                     </div>
-                    <a href="/empleados" class="card-footer text-white text-center text-decoration-none bg-dark bg-opacity-25">
+                    <a href="/empleados" class="card-footer bg-white text-primary fw-semibold text-center text-decoration-none py-2">
                         Gestionar personal <i class="bi bi-arrow-right-circle ms-1"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Tarjeta de Horarios -->
-            <div class="col-lg-4 col-6">
-                <div class="card bg-success text-white shadow-sm border-0 h-100">
-                    <div class="card-body">
+            <div class="col-lg-4 col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h3 class="fw-bold mb-0">Activos</h3>
-                                <p class="mb-0 fs-5">Horarios</p>
+                                <p class="text-muted small text-uppercase fw-semibold mb-1">Turnos</p>
+                                <h3 class="fw-bold mb-0 text-dark">Activos</h3>
+                                <p class="mb-0 text-secondary">Horarios</p>
                             </div>
-                            <i class="bi bi-clock-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 56px; height: 56px;">
+                                <i class="bi bi-clock-fill fs-3"></i>
+                            </div>
                         </div>
                     </div>
-                    <a href="/horarios" class="card-footer text-white text-center text-decoration-none bg-dark bg-opacity-25">
+                    <a href="/horarios" class="card-footer bg-white text-primary fw-semibold text-center text-decoration-none py-2">
                         Asignar turnos <i class="bi bi-arrow-right-circle ms-1"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Tarjeta de Reportes -->
-            <div class="col-lg-4 col-6">
-                <div class="card bg-primary text-white shadow-sm border-0 h-100">
-                    <div class="card-body">
+            <div class="col-lg-4 col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h3 class="fw-bold mb-0">Citas</h3>
-                                <p class="mb-0 fs-5">Reportes Generales</p>
+                                <p class="text-muted small text-uppercase fw-semibold mb-1">Analítica</p>
+                                <h3 class="fw-bold mb-0 text-dark">Citas</h3>
+                                <p class="mb-0 text-secondary">Reportes Generales</p>
                             </div>
-                            <i class="bi bi-file-earmark-bar-graph-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 56px; height: 56px;">
+                                <i class="bi bi-file-earmark-bar-graph-fill fs-3"></i>
+                            </div>
                         </div>
                     </div>
-                    <a href="/reportes/citas" class="card-footer text-white text-center text-decoration-none bg-dark bg-opacity-25">
+                    <a href="/reportes/citas" class="card-footer bg-white text-primary fw-semibold text-center text-decoration-none py-2">
                         Ver historial <i class="bi bi-arrow-right-circle ms-1"></i>
                     </a>
                 </div>

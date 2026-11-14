@@ -2,66 +2,57 @@
 @inject NavigationManager Navegacion
 @implements IDisposable
 
-<div class="app-wrapper @(colapsarSidebar ? "sidebar-collapse" : "")">
-    <!-- Barra superior (Navbar) -->
-    <nav class="app-header navbar navbar-expand bg-body shadow-sm">
+<div class="app-wrapper">
+    <!-- Barra superior solo visible en móvil para abrir/cerrar el menú -->
+    <nav class="app-header navbar navbar-expand bg-body border-bottom d-lg-none">
         <div class="container-fluid">
-            <!-- Botón colapsar menú lateral y título -->
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
-                    <button type="button" class="nav-link btn btn-link border-0 shadow-none text-dark" @onclick="ToggleSidebar">
+                    <button type="button" class="nav-link btn btn-link border-0 shadow-none text-dark" onclick="document.body.classList.toggle('sidebar-open')" aria-label="Mostrar u ocultar menú">
                         <i class="bi bi-list fs-4"></i>
                     </button>
-                </li>
-                <li class="nav-item d-none d-md-block">
-                    <span class="navbar-text fw-bold text-success">
-                        🐾 Clínica Veterinaria Mimados
-                    </span>
-                </li>
-            </ul>
-
-            <!-- Menú derecho de usuario -->
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-1"></i> @EtiquetaUsuario
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        @if (EsAdmin)
-                        {
-                            <li><a class="dropdown-item" href="/admin/perfil"><i class="bi bi-person-fill me-2"></i>Mi Perfil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                        }
-                        else if (EsPersonalVeterinario)
-                        {
-                            <li><a class="dropdown-item" href="/veterinario/citas"><i class="bi bi-calendar-check me-2"></i>Mis Citas</a></li>
-                            <li><a class="dropdown-item" href="/veterinario/historial"><i class="bi bi-journal-medical me-2"></i>Historial Pacientes</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                        }
-                        else
-                        {
-                            <li><a class="dropdown-item" href="/cliente/perfil"><i class="bi bi-gear me-2"></i>Mi Cuenta</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                        }
-                        <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
                 </li>
             </ul>
         </div>
     </nav>
 
     <!-- Barra lateral (Sidebar) donde se incrusta tu componente NavMenu -->
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+    <aside class="app-sidebar bg-white border-end">
+        <!-- Botón circular de colapso estilo clínica -->
+        <button type="button"
+                class="sidebar-collapse-btn d-none d-lg-flex"
+                onclick="document.body.classList.toggle('sidebar-collapse')"
+                aria-label="Colapsar o expandir menú"
+                title="Colapsar o expandir menú">
+            <i class="bi bi-chevron-left sidebar-collapse-icon"></i>
+        </button>
+
         <!-- Logo o Marca del Sistema -->
         <div class="sidebar-brand">
-            <a href="/" class="brand-link text-decoration-none">
-                <span class="brand-text fw-bold">Mimados Vet</span>
+            <a href="@RutaInicio" class="brand-link text-decoration-none">
+                <img src="images/logo-mimados.png" alt="Mimados Veterinaria y Petshop" class="brand-logo-full logo-xl" />
+                <img src="images/logo-mimados.png" alt="Mimados" class="brand-logo-mini logo-xs" />
             </a>
         </div>
 
         <!-- Contenedor del menú de navegación -->
         <div class="sidebar-wrapper">
             <NavMenu />
+        </div>
+
+        <!-- Usuario y Cerrar sesión fijos abajo -->
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info" title="@EtiquetaUsuario">
+                <i class="bi bi-person-circle sidebar-user-icon"></i>
+                <div class="sidebar-user-details">
+                    <span class="sidebar-user-name">@NombreUsuarioCorto</span>
+                    <span class="sidebar-user-role">@RolEtiqueta</span>
+                </div>
+            </div>
+            <a href="/auth/logout" class="sidebar-logout-link" title="Cerrar sesión">
+                <i class="bi bi-box-arrow-right sidebar-logout-icon"></i>
+                <span class="sidebar-logout-text">Cerrar sesión</span>
+            </a>
         </div>
     </aside>
 
@@ -87,12 +78,32 @@
     </footer>
 </div>
 
+<!-- Modal Contáctanos -->
+<div class="modal fade" id="contactanosModal" tabindex="-1" aria-labelledby="contactanosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 p-2">
+            <div class="modal-header border-0 pb-1">
+                <h5 class="modal-title fw-bold text-dark" id="contactanosModalLabel">Contáctanos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="d-inline-flex align-items-center justify-content-center gap-2 text-secondary mb-4">
+                    <i class="bi bi-telephone fs-4"></i>
+                    <span class="fs-6">Teléfono</span>
+                </div>
+                <a href="tel:+51933112428" class="btn btn-primary rounded-pill w-100 py-2 fw-semibold">
+                    +51 933112428
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     private System.Security.Claims.ClaimsPrincipal? _currentUser;
-    private bool colapsarSidebar = false;
 
     private bool EsAdmin =>
         (_currentUser?.Identity?.IsAuthenticated == true &&
@@ -112,6 +123,30 @@
             Navegacion.Uri.Contains("/veterinario", StringComparison.OrdinalIgnoreCase)
         );
 
+    private string RutaInicio =>
+        EsAdmin ? "/admin/inicio"
+        : EsPersonalVeterinario ? "/empleado/citas"
+        : "/cliente/inicio";
+
+    private string NombreUsuarioCorto
+    {
+        get
+        {
+            var displayName = _currentUser?.FindFirst("DisplayName")?.Value;
+            if (!string.IsNullOrWhiteSpace(displayName))
+                return displayName;
+
+            if (EsAdmin) return "Administrador";
+            if (EsPersonalVeterinario) return "Personal Veterinario";
+            return "Cliente";
+        }
+    }
+
+    private string RolEtiqueta =>
+        EsAdmin ? "Administrador"
+        : EsPersonalVeterinario ? "Veterinario"
+        : "Cliente";
+
     private string EtiquetaUsuario
     {
         get
@@ -128,11 +163,6 @@
             if (EsPersonalVeterinario) return "Personal Veterinario";
             return "Cliente";
         }
-    }
-
-    private void ToggleSidebar()
-    {
-        colapsarSidebar = !colapsarSidebar;
     }
 
     protected override async Task OnInitializedAsync()

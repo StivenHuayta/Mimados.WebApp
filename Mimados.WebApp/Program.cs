@@ -2,6 +2,8 @@
 using Mimados.WebApp.Models;
 using Mimados.WebApp.Security;
 using Mimados.WebApp.Services;
+using Mimados.WebApp.Services.Implementations;
+using Mimados.WebApp.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,10 +39,6 @@ builder.Services.AddHttpClient<IServicioService, ServicioService>(ConfigureClien
 builder.Services.AddHttpClient<ISedeServicioService, SedeServicioService>(ConfigureClient);
 //nuevos
 builder.Services.AddHttpClient<IReporteService, ReporteService>(ConfigureClient);
-
-// Servicios de la aplicación en memoria / estado
-builder.Services.AddSingleton<VeterinariaMockDataService>();
-
 
 var app = builder.Build();
 

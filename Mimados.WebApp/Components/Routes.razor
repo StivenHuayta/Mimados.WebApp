@@ -4,7 +4,7 @@
             <NotAuthorized>
                 @if (context.User.Identity?.IsAuthenticated == true)
                 {
-                    <Mimados.WebApp.Components.Security.AccesoDenegado />
+                    <Mimados.WebApp.Components.Pages.Auth.AccesoDenegado />
                 }
                 else
                 {

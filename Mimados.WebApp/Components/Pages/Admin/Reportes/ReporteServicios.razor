@@ -7,25 +7,28 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Reporte de Servicios Más Solicitados</h2>
-        <button class="btn btn-success" @onclick="ExportarPDF">
-            <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        <button class="btn btn-primary" @onclick="ExportarPDF">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Exportar PDF
         </button>
     </div>
 
-        <!-- Filtros del Reporte -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="card-title m-0 fw-bold">Filtros de Búsqueda</h5>
-        </div>
-        <div class="card-body bg-light">
+    <div class="card shadow-sm mb-4 bg-white">
+        <div class="card-body">
+            <!-- Fila 1: Título -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <h5 class="card-title fw-bold text-primary mb-0">Filtros de Búsqueda</h5>
+                </div>
+            </div>
+
             <!-- Fila 2: Fechas (Desde y Hasta lado a lado) -->
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Fecha Desde</label>
+                    <label class="form-label text-secondary fw-semibold small">Fecha Desde</label>
                     <input type="date" class="form-control" @bind="filtroFechaInicio" />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Fecha Hasta</label>
+                    <label class="form-label text-secondary fw-semibold small">Fecha Hasta</label>
                     <input type="date" class="form-control" @bind="filtroFechaFin" />
                 </div>
             </div>
@@ -52,18 +55,14 @@
         </div>
     }
 
-
-        <!-- Resultados del Reporte -->
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white">
-            <h5 class="card-title m-0 fw-bold">Listado de Servicios Encontrados</h5>
-        </div>
+    <!-- Tabla de servicios solicitados -->
+    <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-bordered align-middle mb-0">
-                    <thead class="bg-light">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th class="ps-3">#</th>
                             <th>Nombre del Servicio</th>
                             <th>Total Solicitudes</th>
                             <th>Precio Unitario</th>
@@ -75,7 +74,7 @@
                         @if (serviciosPopulares.Count == 0)
                         {
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No se encontraron servicios registrados para el período seleccionado.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No se encontraron servicios registrados para el período seleccionado.</td>
                             </tr>
                         }
                         else
@@ -83,9 +82,9 @@
                             @foreach (var c in serviciosPopulares)
                             {
                                 <tr>
-                                    <td>@c.Orden</td>
-                                    <td>@c.Nombre</td>
-                                    <td>@c.Cantidad</td>
+                                    <td class="ps-3">@c.Orden</td>
+                                    <td><strong>@c.Nombre</strong></td>
+                                    <td><span class="badge badge-mimados-primary fs-6">@c.Cantidad solicitudes</span></td>
                                     <td>@c.Precio.ToString("N2")</td>
                                     <td>@c.Total.ToString("N2")</td>
                                     <td>@c.Proporcion</td>
@@ -121,33 +120,29 @@
         fechasNoValidas = false;
         return true;
     }
+
     private void CerrarMensajeError()
     {
         fechasNoValidas = false;
         mensajeError = string.Empty;
     }
+
     private async Task AplicarFiltros()
     {
         if (!ValidarFechas())
         {
-            Console.WriteLine("entro a error de fechas");
-
             return;
         }
 
         try
         {
-            serviciosPopulares=await ReporteService.ObtenerReporteServiciosPorFechas(filtroFechaInicio, filtroFechaFin);
-            Console.WriteLine("Filtrando Ando");
+            serviciosPopulares = await ReporteService.ObtenerReporteServiciosPorFechas(filtroFechaInicio, filtroFechaFin);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("atrapo algo");
-
             mensajeError = "Error al obtener los servicios: " + ex.Message;
-            // Manejo de errores
+            fechasNoValidas = true;
         }
-        
     }
 
     private void LimpiarFiltros()
@@ -169,6 +164,5 @@
 
     private void ExportarPDF()
     {
-        Console.WriteLine("Exportando Ando");
     }
 }

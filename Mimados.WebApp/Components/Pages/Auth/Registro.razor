@@ -14,9 +14,7 @@
 <div class="container my-4" style="max-width: 680px;">
     <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white">
         <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-2" style="width: 52px; height: 52px; font-size: 1.6rem;">
-                🐾
-            </div>
+            <img src="images/logo-mimados.png" alt="Mimados Veterinaria y Petshop" class="img-fluid mb-2" style="max-height: 95px; width: auto;" />
             <h3 class="fw-bold text-dark mb-1">Registro de Nuevo Cliente</h3>
             <p class="text-secondary small">Crea tu cuenta para gestionar la atención de tus mascotas</p>
         </div>
@@ -88,7 +86,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-success w-100 py-2.5 fw-semibold shadow-sm mb-3" disabled="@cargando">
+            <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm mb-3" disabled="@cargando">
                 @if (cargando)
                 {
                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -103,7 +101,7 @@
 
             <div class="text-center small pt-2 border-top">
                 <span class="text-muted">¿Ya tienes una cuenta? </span>
-                <a href="/login" class="fw-semibold text-success text-decoration-none">Inicia sesión aquí</a>
+                <a href="/login" class="fw-semibold text-primary text-decoration-none">Inicia sesión aquí</a>
             </div>
         </EditForm>
     </div>
@@ -144,9 +142,9 @@
                 mensajeError = mensaje ?? "Ocurrió un error al registrar la cuenta.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = "No se pudo completar el registro: " + ex.Message;
+            mensajeError = "No se pudo completar el registro. Inténtalo nuevamente.";
         }
         finally
         {

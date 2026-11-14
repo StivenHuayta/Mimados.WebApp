@@ -56,7 +56,7 @@
                         <input type="time" class="form-control" @bind="horaFinLocal" />
                     </div>
                 </div>
-                <button class="btn btn-success w-100 fw-bold mt-2" @onclick="GuardarHorario" disabled="@cargando">
+                <button class="btn btn-primary w-100 fw-bold mt-2" @onclick="GuardarHorario" disabled="@cargando">
                     @(cargando ? "Guardando..." : "Guardar Horario")
                 </button>
             </div>
@@ -115,15 +115,15 @@
                                                 <td>
                                                     @if (hor.Activo)
                                                     {
-                                                        <span class="badge bg-success">Activo</span>
+                                                        <span class="badge badge-mimados-primary">Activo</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="badge bg-danger">Inactivo</span>
+                                                        <span class="badge badge-mimados-danger">Inactivo</span>
                                                     }
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-danger fw-bold" @onclick="() => EliminarHorario(hor.Id)">Eliminar</button>
+                                                    <button class="btn btn-sm btn-outline-danger fw-semibold" @onclick="() => EliminarHorario(hor.Id)">Eliminar</button>
                                                 </td>
                                             </tr>
                                         }
@@ -181,7 +181,7 @@
         }
         catch (Exception)
         {
-            mensajeAlerta = "No se pudieron cargar los datos del servidor.";
+            mensajeAlerta = "No se pudieron cargar los horarios en este momento.";
         }
     }
 
@@ -216,9 +216,9 @@
                 mensajeAlerta = respuesta?.Message ?? "Error al registrar el horario.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeAlerta = $"Error de conexión: {ex.Message}";
+            mensajeAlerta = "No se pudo conectar con el servidor. Inténtalo nuevamente.";
         }
         finally
         {

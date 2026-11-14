@@ -26,10 +26,10 @@
     </div>
 
     <!-- Filtros -->
-    <div class="card p-4 shadow-sm border-0 bg-light mb-4">
+    <div class="card p-4 shadow-sm border-0 bg-white mb-4">
 
         <h5 class="fw-bold mb-3">
-            <i class="bi bi-funnel text-success me-2"></i>
+            <i class="bi bi-funnel text-primary me-2"></i>
             Buscar disponibilidad
         </h5>
 
@@ -85,7 +85,7 @@
 
         <div class="text-end">
             <button type="button"
-                    class="btn btn-success px-4"
+                    class="btn btn-primary px-4"
                     disabled="@(consultando || cargando)"
                     @onclick="BuscarDisponibilidad">
 
@@ -118,7 +118,7 @@
                 Veterinarios disponibles
             </h5>
 
-            <span class="badge bg-success">
+            <span class="badge badge-mimados-primary">
                 @resultados.Count veterinarios
             </span>
         </div>
@@ -137,10 +137,10 @@
                 @foreach (var resultado in resultados)
                 {
                     <div class="col">
-                        <div class="card h-100 shadow-sm border-0 bg-light">
+                        <div class="card h-100 shadow-sm border-0 bg-white">
 
                             <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0 fw-bold">
+                                <h5 class="mb-0 fw-bold text-white">
                                     <i class="bi bi-person-badge me-2"></i>
                                     @resultado.Veterinario.Nombre
                                 </h5>
@@ -172,7 +172,7 @@
                                     
                                     @foreach (var hora in resultado.Horarios)
                                     {
-                                        <a class="btn btn-outline-success btn-sm"
+                                        <a class="btn btn-outline-primary btn-sm"
                                            href="@CrearEnlaceReserva(resultado.Veterinario.EmpleadoId, hora)">
                                             <i class="bi bi-calendar-plus me-1"></i>
                                             @hora - Reservar
@@ -241,9 +241,9 @@
                 .OrderBy(s => s)
                 .ToList();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = "Error al cargar veterinarios: " + ex.Message;
+            mensajeError = "No se pudieron cargar los veterinarios. Inténtalo nuevamente.";
         }
         finally
         {
@@ -322,10 +322,15 @@
 
             mostrarResultados = true;
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             resultados.Clear();
-            mensajeError = "Error al consultar disponibilidad: " + ex.Message;
+            mensajeError = ex.Message;
+        }
+        catch (Exception)
+        {
+            resultados.Clear();
+            mensajeError = "No se pudo consultar la disponibilidad. Inténtalo nuevamente.";
         }
         finally
         {

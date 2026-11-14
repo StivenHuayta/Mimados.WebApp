@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="m-0 text-dark fw-bold">Gestión de Empleados</h3>
-    <button class="btn btn-success fw-bold" @onclick="IrARegistro">
+    <button class="btn btn-primary fw-bold" @onclick="IrARegistro">
         + Registrar Nuevo Empleado
     </button>
 </div>
@@ -60,16 +60,16 @@
                                 <td>
                                     @if (emp.Activo)
                                     {
-                                        <span class="badge bg-success">Activo</span>
+                                        <span class="badge badge-mimados-primary">Activo</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-danger">Inactivo</span>
+                                        <span class="badge badge-mimados-danger">Inactivo</span>
                                     }
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-warning text-dark fw-bold">Editar</button>
-                                    <button class="btn btn-sm btn-danger fw-bold ms-1">Eliminar</button>
+                                    <button class="btn btn-sm btn-outline-primary fw-semibold">Editar</button>
+                                    <button class="btn btn-sm btn-outline-danger fw-semibold ms-1">Eliminar</button>
                                 </td>
                             </tr>
                         }
@@ -100,7 +100,7 @@
         }
         catch (Exception ex)
         {
-            mensajeError = "No se pudo conectar con el servidor Java. Verifica que esté en ejecución.";
+            mensajeError = "No se pudieron cargar los empleados en este momento. Inténtalo nuevamente.";
         }
     }
 

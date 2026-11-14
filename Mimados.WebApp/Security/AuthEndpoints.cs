@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Mimados.WebApp.Services;
+using Mimados.WebApp.Models;
+using Mimados.WebApp.Services.Interfaces;
 
 namespace Mimados.WebApp.Security;
 
@@ -109,8 +110,8 @@ public static class AuthEndpoints
                 {
                     "Administrador" => "/admin/inicio",
                     "Admin" => "/admin/inicio",
-                    "Veterinario" => "/veterinario/citas",
-                    _ => "/cliente/mascotas"
+                    "Veterinario" => "/empleado/citas",
+                    _ => "/cliente/inicio"
                 };
             }
             else
@@ -118,8 +119,8 @@ public static class AuthEndpoints
                 destino = resultado.Rol.ToLowerInvariant() switch
                 {
                     "admin" => "/admin/inicio",
-                    "veterinario" => "/veterinario/citas",
-                    _ => "/cliente/mascotas"
+                    "veterinario" => "/empleado/citas",
+                    _ => "/cliente/inicio"
                 };
             }
 

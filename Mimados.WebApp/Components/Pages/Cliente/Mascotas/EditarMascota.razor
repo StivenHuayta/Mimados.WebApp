@@ -35,7 +35,7 @@
     }
     else if (mascotaAEditar != null)
     {
-        <div class="card p-4 shadow-sm border-0 bg-light">
+        <div class="card p-4 shadow-sm border-0 bg-white">
             
             @* Reutilizamos el EditForm con validación nativa (Diapositiva 39) *@
             <EditForm Model="@mascotaAEditar" OnValidSubmit="ActualizarMascota">
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-warning px-4 fw-bold text-dark">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
                         <i class="bi bi-pencil-square"></i> Actualizar Datos
                     </button>
                 </div>
@@ -134,7 +134,7 @@
         }
         else
         {
-            mensajeError = "No se pudo encontrar la mascota solicitada en la base de datos.";
+            mensajeError = "No se encontró la mascota solicitada.";
         }
     }
 
@@ -166,7 +166,7 @@
         }
         else
         {
-            mensajeError = "Error al comunicarse con el servidor. No se pudieron actualizar los datos.";
+            mensajeError = "No se pudieron actualizar los datos. Inténtalo nuevamente.";
         }
     }
 

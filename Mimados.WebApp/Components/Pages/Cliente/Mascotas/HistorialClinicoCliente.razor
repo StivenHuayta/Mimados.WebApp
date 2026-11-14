@@ -6,7 +6,6 @@
 
 @* INICIO CAMBIOS: Inyectar el servicio de mascotas *@
 @inject IMascotaService MascotaService
-@inject IConfiguration Config
 
 
 <div class="container mt-4" style="max-width: 900px;">
@@ -18,7 +17,7 @@
             <button class="btn btn-secondary me-2" @onclick="Volver">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
-            <button class="btn btn-dark" @onclick="ImprimirReporte">
+            <button class="btn btn-primary" @onclick="ImprimirReporte">
                 <i class="bi bi-file-earmark-pdf"></i> Descargar Reporte
             </button>
         </div>
@@ -35,7 +34,7 @@
 
     @if (historial == null)
     {
-        <div class="alert alert-info shadow-sm">Buscando el historial médico en la base de datos...</div>
+        <div class="alert alert-info shadow-sm">Cargando historial médico...</div>
     }
     else if (!historial.Any())
     {
@@ -46,8 +45,8 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped mb-0">
-                        <thead class="table-primary">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
                                 <th>Fecha</th>
                                 <th>Veterinario</th>
@@ -62,7 +61,7 @@
                                 <tr>
                                     <td class="fw-bold">@registro.Fecha</td>
                                     <td>@registro.Veterinario</td>
-                                    <td><span class="badge bg-info text-dark">@registro.Servicio</span></td>
+                                    <td><span class="badge badge-mimados-primary">@registro.Servicio</span></td>
                                     <td>@registro.Notas</td>
                                     <td>@registro.Peso kg</td>
                                 </tr>
@@ -104,11 +103,8 @@
     {
         // Generación del reporte exigido por el RF-14
         mostrarAlertaDescarga = true;
-        Console.WriteLine($"Generando reporte PDF para la mascota ID: {Id}");
 
-        var baseUrl = Config["ApiBaseUrl"] ?? "http://localhost:8080/MimadosRS/webresources/";
-        if (!baseUrl.EndsWith("/")) baseUrl += "/";
-        string urlPdf = $"{baseUrl}mascotas/historial/{Id}/pdf";
+        string urlPdf = MascotaService.ObtenerUrlPdfHistorial(Id);
         Nav.NavigateTo(urlPdf, forceLoad: true);
     }
 

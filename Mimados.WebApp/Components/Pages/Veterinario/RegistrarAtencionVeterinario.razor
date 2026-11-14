@@ -1,6 +1,5 @@
 @page "/veterinario/atenciones/nueva"
 @rendermode InteractiveServer
-@inject VeterinariaMockDataService MockData
 @inject NavigationManager Navigation
 
 <div class="container-fluid px-0" style="max-width: 1000px;">
@@ -8,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="m-0 text-dark fw-bold">
-                <i class="bi bi-clipboard2-pulse text-success me-2"></i>Registrar Atención Clínica
+                <i class="bi bi-clipboard2-pulse text-primary me-2"></i>Registrar Atención Clínica
             </h3>
             <p class="text-muted small mb-0">
                 Registro del informe clínico veterinario al finalizar una cita médica y anexión inmediata al historial.
@@ -24,25 +23,25 @@
     @* Alerta de Éxito al Registrar *@
     @if (guardadoExitoso)
     {
-        <div class="card shadow border-0 border-start border-5 border-success mb-4 bg-light">
+        <div class="card shadow border-0 border-start border-5 border-primary mb-4 bg-white">
             <div class="card-body p-4 text-center">
                 <div class="mb-3">
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+                    <i class="bi bi-check-circle-fill text-primary" style="font-size: 3.5rem;"></i>
                 </div>
-                <h4 class="fw-bold text-success mb-2">¡Atención Clínica Registrada con Éxito!</h4>
+                <h4 class="fw-bold text-primary mb-2">¡Atención Clínica Registrada con Éxito!</h4>
                 <p class="text-muted fs-6 mb-4">
                     Los detalles clínicos han sido anexados satisfactoriamente al expediente médico de 
                     <strong class="text-dark">@mascotaSeleccionada?.Nombre</strong>. 
                     @if (citaSeleccionada != null)
                     {
-                        <span>La Cita <strong>#@citaSeleccionada.CitaId</strong> ha sido marcada como <span class="badge bg-success">ATENDIDA</span>.</span>
+                        <span>La Cita <strong>#@citaSeleccionada.CitaId</strong> ha sido marcada como <span class="badge badge-mimados-solid">ATENDIDA</span>.</span>
                     }
                 </p>
                 <div class="d-flex justify-content-center gap-3">
                     <a href="/veterinario/historial/@(mascotaSeleccionada?.MascotaId ?? 1)" class="btn btn-primary fw-bold px-4">
                         <i class="bi bi-journal-medical me-1"></i> Ver Historial de la Mascota
                     </a>
-                    <a href="/veterinario/citas" class="btn btn-outline-secondary fw-bold px-4">
+                    <a href="/empleado/citas" class="btn btn-outline-secondary fw-bold px-4">
                         <i class="bi bi-calendar-check me-1"></i> Volver a Citas Asignadas
                     </a>
                 </div>
@@ -71,7 +70,7 @@
                                 <i class="bi @(mascotaSeleccionada?.Especie == "CANINO" ? "bi-award-fill" : "bi-stars")"></i>
                             </span>
                             <div>
-                                <h4 class="mb-0 fw-bold">@(mascotaSeleccionada?.Nombre ?? "Seleccione Mascota")</h4>
+                                <h4 class="mb-0 fw-bold text-white">@(mascotaSeleccionada?.Nombre ?? "Seleccione Mascota")</h4>
                                 <div class="opacity-75 small">
                                     @(mascotaSeleccionada?.Especie) • @(mascotaSeleccionada?.Raza) • @(mascotaSeleccionada?.Sexo) • Dueño: @(mascotaSeleccionada?.NombreCliente)
                                 </div>
@@ -80,11 +79,11 @@
                     </div>
                     <div class="col-md-5 mt-3 mt-md-0 ps-md-4">
                         <span class="badge bg-light text-primary text-uppercase fw-bold mb-1">Personal Veterinario</span>
-                        <div class="fw-bold mt-1">@MockData.VeterinarioActual</div>
-                        <div class="opacity-75 small">@MockData.CmvpActual • @MockData.SedeActual</div>
+                        <div class="fw-bold mt-1">Veterinario en turno</div>
+                        <div class="opacity-75 small">Pendiente de conectar</div>
                         @if (citaSeleccionada != null)
                         {
-                            <div class="mt-1 badge bg-warning text-dark">
+                            <div class="mt-1 badge bg-white text-primary">
                                 <i class="bi bi-calendar-check me-1"></i> Vinculado a Cita #@citaSeleccionada.CitaId
                             </div>
                         }
@@ -109,7 +108,7 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Seleccionar Mascota a Atender <span class="text-danger">*</span></label>
                                 <select class="form-select" @onchange="OnCambiarMascota" value="@(mascotaSeleccionada?.MascotaId ?? 0)">
-                                    @foreach (var m in MockData.GetMascotas())
+                                    @foreach (var m in listaMascotas)
                                     {
                                         <option value="@m.MascotaId">@m.Nombre (@m.Especie - @m.Raza) - Dueño: @m.NombreCliente</option>
                                     }
@@ -178,7 +177,7 @@
                     <!-- 3. Tratamiento y Prescripción (tratamiento_recetado, observaciones) -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
-                            <i class="bi bi-capsule text-success me-1"></i> 3. Plan Terapéutico y Prescripción
+                            <i class="bi bi-capsule text-primary me-1"></i> 3. Plan Terapéutico y Prescripción
                         </h6>
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Tratamiento y Medicación Recetada <span class="text-danger">*</span></label>
@@ -195,7 +194,7 @@
                     <!-- 4. Liquidación y Monto Total (monto_total) -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
-                            <i class="bi bi-cash-stack text-success me-1"></i> 4. Liquidación del Servicio
+                            <i class="bi bi-cash-stack text-primary me-1"></i> 4. Liquidación del Servicio
                         </h6>
                         <div class="row g-3 align-items-center">
                             <div class="col-md-6">
@@ -206,18 +205,18 @@
                                 <label class="form-label fw-bold small">Monto Total a Cobrar (S/.) <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text fw-bold">S/.</span>
-                                    <input type="number" step="1.0" class="form-control fw-bold fs-5 text-success" @bind="montoTotal" />
+                                    <input type="number" step="1.0" class="form-control fw-bold fs-5 text-primary" @bind="montoTotal" />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="card-footer bg-light py-3 d-flex justify-content-between align-items-center">
+            <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-outline-secondary" @onclick="Volver">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
                 </button>
-                <button type="button" class="btn btn-success btn-lg fw-bold px-4" @onclick="GuardarAtencion">
+                <button type="button" class="btn btn-primary btn-lg fw-bold px-4" @onclick="GuardarAtencion">
                     <i class="bi bi-check-circle me-1"></i> Guardar Atención y Finalizar Cita
                 </button>
             </div>
@@ -253,6 +252,8 @@
         CargarDatosContexto();
     }
 
+    private List<Mascota> listaMascotas = new();
+
     protected override void OnParametersSet()
     {
         CargarDatosContexto();
@@ -260,28 +261,25 @@
 
     private void CargarDatosContexto()
     {
-        if (CitaId.HasValue && CitaId.Value > 0)
+        // TODO: Conectar con ICitaService y IMascotaService
+        if (CitaId.HasValue && CitaId.Value > 0 && citaSeleccionada != null)
         {
-            citaSeleccionada = MockData.GetCitaById(CitaId.Value);
-            if (citaSeleccionada != null)
-            {
-                mascotaSeleccionada = MockData.GetMascotaById(citaSeleccionada.MascotaId);
-                sintomas = $"Atención en consultorio por motivo: {citaSeleccionada.Motivo}";
-                servicioRealizado = citaSeleccionada.ServicioSolicitado;
-                montoTotal = citaSeleccionada.MontoEstimado;
-                pesoActual = mascotaSeleccionada?.PesoReferencial;
-                return;
-            }
+            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == citaSeleccionada.MascotaId);
+            sintomas = $"Atención en consultorio por motivo: {citaSeleccionada.Motivo}";
+            servicioRealizado = citaSeleccionada.ServicioSolicitado;
+            montoTotal = citaSeleccionada.MontoEstimado;
+            pesoActual = mascotaSeleccionada?.PesoReferencial;
+            return;
         }
 
         if (MascotaId.HasValue && MascotaId.Value > 0)
         {
-            mascotaSeleccionada = MockData.GetMascotaById(MascotaId.Value);
+            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == MascotaId.Value);
             pesoActual = mascotaSeleccionada?.PesoReferencial;
         }
         else if (mascotaSeleccionada == null)
         {
-            mascotaSeleccionada = MockData.GetMascotas().FirstOrDefault();
+            mascotaSeleccionada = listaMascotas.FirstOrDefault();
             pesoActual = mascotaSeleccionada?.PesoReferencial;
         }
     }
@@ -290,7 +288,7 @@
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
-            mascotaSeleccionada = MockData.GetMascotaById(id);
+            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == id);
             pesoActual = mascotaSeleccionada?.PesoReferencial;
         }
     }
@@ -347,7 +345,7 @@
         {
             CitaId = citaSeleccionada?.CitaId ?? 0,
             MascotaId = mascotaSeleccionada.MascotaId,
-            EmpleadoId = MockData.EmpleadoIdActual,
+            EmpleadoId = 0,
             FechaHoraRegistro = DateTime.Now,
             PesoActual = pesoActual.Value,
             Temperatura = temperatura.Value,
@@ -356,21 +354,16 @@
             TratamientoRecetado = tratamientoRecetado.Trim(),
             Observaciones = observaciones.Trim(),
             MontoTotal = montoTotal,
-            ServicioRealizado = servicioRealizado,
-            SedeNombre = MockData.SedeActual,
-            NombreVeterinario = MockData.VeterinarioActual,
-            CodigoCmvp = MockData.CmvpActual
+            ServicioRealizado = servicioRealizado
         };
 
-        // Guardar en el servicio simulado
-        MockData.RegistrarAtencion(nuevaAtencion);
-
+        // TODO: Enviar nuevaAtencion al servicio REST real
         guardadoExitoso = true;
     }
 
     private void Volver()
     {
-        Navigation.NavigateTo("/veterinario/citas");
+        Navigation.NavigateTo("/empleado/citas");
     }
 }
 

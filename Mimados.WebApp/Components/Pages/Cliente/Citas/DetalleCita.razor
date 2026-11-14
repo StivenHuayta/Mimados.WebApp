@@ -33,11 +33,11 @@
     }
     else if (cita != null)
     {
-        <div class="card shadow-sm border-0 bg-light">
+        <div class="card shadow-sm border-0 bg-white">
 
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
 
-                <h5 class="mb-0 fw-bold">
+                <h5 class="mb-0 fw-bold text-white">
                     Cita @($"C-{cita.CitaId:D3}")
                 </h5>
 
@@ -144,12 +144,12 @@
     {
         return estado?.ToUpperInvariant() switch
         {
-            "CONFIRMADA" => "bg-success",
-            "PROGRAMADA" => "bg-primary",
-            "ATENDIDA" => "bg-secondary",
-            "CANCELADA" => "bg-danger",
-            "NO_ASISTIO" => "bg-warning text-dark",
-            _ => "bg-secondary"
+            "CONFIRMADA" => "bg-white text-primary",
+            "PROGRAMADA" => "badge-mimados-primary",
+            "ATENDIDA" => "badge-mimados-neutral",
+            "CANCELADA" => "badge-mimados-danger",
+            "NO_ASISTIO" => "badge-mimados-neutral",
+            _ => "badge-mimados-neutral"
         };
     }
 }

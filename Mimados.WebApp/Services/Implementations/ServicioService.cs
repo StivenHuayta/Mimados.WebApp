@@ -1,32 +1,52 @@
-﻿using Mimados.WebApp.Models;
+using System.Net.Http.Json;
+using Mimados.WebApp.Models;
+using Mimados.WebApp.Services.Interfaces;
 
-namespace Mimados.WebApp.Services
+namespace Mimados.WebApp.Services.Implementations;
+
+public class ServicioService : IServicioService
 {
-    public class ServicioService: IServicioService
-{
-        private readonly HttpClient _http;
+    private const string PATH = "ServicioRS";
+    private readonly HttpClient _http;
+    private readonly ILogger<ServicioService> _logger;
 
-        public ServicioService(HttpClient http)
+    public ServicioService(HttpClient http, ILogger<ServicioService> logger)
+    {
+        _http = http;
+        _logger = logger;
+    }
+
+    public async Task<Servicio?> ObtenerServicioPorIdAsync(int id)
+    {
+        try
         {
-            _http = http;
-        }
-
-        public async Task<Servicio?> ObtenerServicioPorIdAsync(int id)
-        {
-            var respuesta = await _http.GetFromJsonAsync<ApiResponse<Servicio>>(
-            $"ServicioRS/{id}");
-
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<Servicio>>($"{PATH}/{id}");
             return respuesta?.Data;
         }
-        public async Task<List<Servicio>> ObtenerServiciosAsync()
+        catch (Exception ex)
         {
-            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>(
-                $"ServicioRS/listarServicios");
-
-            return respuesta?.Data ?? new List<Servicio>(); 
-
+            _logger.LogError(ex, "Error al obtener servicio {ServicioId}", id);
+            return null;
         }
-        public async Task<bool> CrearServicioAsync(Servicio servicio)
+    }
+
+    public async Task<List<Servicio>> ObtenerServiciosAsync()
+    {
+        try
+        {
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>($"{PATH}/listarServicios");
+            return respuesta?.Data ?? new List<Servicio>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar servicios");
+            return new List<Servicio>();
+        }
+    }
+
+    public async Task<bool> CrearServicioAsync(Servicio servicio)
+    {
+        try
         {
             var datos = new
             {
@@ -34,22 +54,25 @@ namespace Mimados.WebApp.Services
                 descripcion = servicio.Descripcion,
                 precioReferencial = servicio.PrecioReferencial,
                 duracionMinutos = servicio.DuracionMinutos
-
             };
 
-
-            var response = await _http.PostAsJsonAsync("ServicioRS/registrar", datos);
-
+            var response = await _http.PostAsJsonAsync($"{PATH}/registrar", datos);
             if (!response.IsSuccessStatusCode)
                 return false;
 
-            var resultado = await response.Content
-                .ReadFromJsonAsync<ApiResponse<object>>();
-
+            var resultado = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
             return resultado?.Success == true;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear servicio {Nombre}", servicio.Nombre);
+            return false;
+        }
+    }
 
-        public async Task<bool> ActualizarServicioAsync(Servicio servicio)
+    public async Task<bool> ActualizarServicioAsync(Servicio servicio)
+    {
+        try
         {
             var datos = new
             {
@@ -61,30 +84,25 @@ namespace Mimados.WebApp.Services
                 activo = servicio.Activo
             };
 
-            var response = await _http.PutAsJsonAsync($"ServicioRS", datos);
-
+            var response = await _http.PutAsJsonAsync(PATH, datos);
             if (!response.IsSuccessStatusCode)
             {
-                // los actualizadores devuelven un Response.ok().build(); 200
                 string errorMsg = await response.Content.ReadAsStringAsync();
-                throw new Exception(string.IsNullOrEmpty(errorMsg) ? "No se pudo actualizar el servicio." : errorMsg);
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(errorMsg) || errorMsg.TrimStart().StartsWith("<")
+                    ? "No se pudo actualizar el servicio."
+                    : errorMsg);
             }
 
             return true;
         }
-
-
-
-        public class ServicioJavaResponse
+        catch (InvalidOperationException)
         {
-            public int Id { get; set; }
-            public string? Nombre { get; set; }
-            public string? Direccion { get; set; }
-            public string? Telefono { get; set; }
-            public bool Activo { get; set; }
-
-
-
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar servicio {ServicioId}", servicio.Id);
+            throw new Exception("No se pudo guardar los cambios. Inténtalo nuevamente.");
         }
     }
 }

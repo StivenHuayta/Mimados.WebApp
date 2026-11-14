@@ -31,7 +31,7 @@
                                 <label class="form-label fw-bold">Rol</label>
                                 <input type="text" class="form-control bg-light" value="@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Administrador")" disabled />
                             </div>
-                            <button type="button" class="btn btn-success fw-bold w-100">Actualizar Datos</button>
+                            <button type="button" class="btn btn-primary fw-bold w-100">Actualizar Datos</button>
                         </form>
                     </div>
                 </div>

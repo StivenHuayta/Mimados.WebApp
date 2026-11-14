@@ -10,11 +10,11 @@
     justify-content: center;
     width: 60px;
     height: 60px;
-    background-color: #198754; /* Verde Mimados */
+    background-color: #005BB5; /* Azul Mimados */
     border-radius: 50%;
     color: #ffffff;
     font-size: 26px;
-    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.25);
+    box-shadow: 0 4px 10px rgba(0, 91, 181, 0.25);
 }
 
 .card {
@@ -22,12 +22,12 @@
 }
 
 .input-group-text {
-    color: #6c757d;
+    color: #64748b;
 }
 
 .form-control:focus {
-    border-color: #198754;
-    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.2);
+    border-color: #005BB5;
+    box-shadow: 0 0 0 0.25rem rgba(0, 91, 181, 0.18);
 }
 
 .demo-user-card {

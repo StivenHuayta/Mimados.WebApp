@@ -21,7 +21,7 @@
     }
     else
     {
-        <div class="card p-4 shadow-sm border-0 bg-light">
+        <div class="card p-4 shadow-sm border-0 bg-white">
             
             @* Reutilizamos el EditForm con validación nativa (Diapositiva 39) *@
             <EditForm Model="@nuevoServicio" OnValidSubmit="ActualizarServicio">
@@ -69,7 +69,7 @@
 
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-warning px-4 fw-bold text-dark">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
                         <i class="bi bi-pencil-square"></i> Actualizar Datos
                     </button>
                 </div>
@@ -112,9 +112,9 @@
                 mensajeError = "No se encontró el servicio solicitado.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = $"Error al cargar el servicio: {ex.Message}";
+            mensajeError = "No se pudo cargar la información del servicio.";
         }
         finally
         {
@@ -138,7 +138,6 @@
             servicio.Activo = nuevoServicio.Activo;
 
             await ServicioService.ActualizarServicioAsync(servicio);
-            Console.WriteLine($"Actualizando datos del servicio ID {Id}: {nuevoServicio?.Nombre}");
 
 
             // Si todo sale bien y no lanza excepción, redirige a la lista de administración
@@ -148,7 +147,6 @@
         {
             // Atrapa cualquier error (incluyendo el mensaje que mande el ApiResponse del backend)
             mensajeError = ex.Message;
-            Console.WriteLine($"Error capturado: {mensajeError}");
         }
         finally
         {

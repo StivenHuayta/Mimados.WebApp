@@ -9,10 +9,7 @@
     <div class="card shadow-lg border-0">
         <div class="card-body p-4 p-sm-5">
             <div class="text-center mb-4">
-                <div class="brand-logo-circle mb-3">
-                    <i class="bi bi-shield-lock-fill"></i>
-                </div>
-                <h3 class="fw-bold mb-1 text-success">🐾 Mimados Vet</h3>
+                <img src="images/logo-mimados.png" alt="Mimados Veterinaria y Petshop" class="img-fluid mb-2" style="max-height: 115px; width: auto;" />
                 <p class="text-muted small mb-0">Sistema de Gestión Veterinaria y Citas</p>
             </div>
 
@@ -38,7 +35,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label for="contrasena" class="form-label text-secondary fw-semibold small mb-0">Contraseña</label>
-                        <a href="javascript:void(0)" class="small text-decoration-none text-success">¿Olvidó su contraseña?</a>
+                        <a href="#" class="small text-decoration-none text-primary" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">¿Olvidó su contraseña?</a>
                     </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0">
@@ -91,7 +88,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-success w-100 py-2.5 fw-semibold shadow-sm">
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm">
                     <span>Ingresar</span>
                     <i class="bi bi-box-arrow-in-right ms-1"></i>
                 </button>
@@ -100,8 +97,31 @@
             <!-- Opción para crear nueva cuenta de cliente si no tienes una -->
             <div class="text-center mt-3 pt-3 border-top">
                 <span class="text-muted small">¿No tienes una cuenta? </span>
-                <a href="/registro" class="small fw-semibold text-success text-decoration-none">
+                <a href="/registro" class="small fw-semibold text-primary text-decoration-none">
                     <i class="bi bi-person-plus me-1"></i>Crear cuenta de cliente
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ¿Olvidó su contraseña? -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 p-2">
+            <div class="modal-header border-0 pb-1">
+                <h5 class="modal-title fw-bold text-dark" id="forgotPasswordModalLabel">¿Olvidó su contraseña?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3 text-primary" style="font-size: 2.25rem; line-height: 1;">
+                    <i class="bi bi-envelope-at"></i>
+                </div>
+                <p class="text-muted mb-4">
+                    Para recuperar o restablecer tu contraseña, por favor contáctanos al siguiente correo:
+                </p>
+                <a href="mailto:areadti@mimados.pe" class="btn btn-primary rounded-pill w-100 py-2 fw-semibold">
+                    areadti@mimados.pe
                 </a>
             </div>
         </div>

@@ -1,17 +1,604 @@
+/* ==========================================================================
+   MIMADOS VETERINARIA - CLINICAL BLUE THEME (Inspired by Logo & Reference UI)
+   ========================================================================== */
+
+:root {
+    /* Brand Blues (from Mimados Logo) */
+    --mimados-primary: #005BB5;
+    --mimados-primary-rgb: 0, 91, 181;
+    --mimados-primary-hover: #004994;
+    --mimados-primary-dark: #003A75;
+    --mimados-primary-light: #2B7CD3;
+    --mimados-primary-subtle: #EAF2FC;
+    --mimados-primary-border: #C7DDF6;
+
+    /* Clinical Neutrals */
+    --mimados-bg-app: #F8FAFC;
+    --mimados-bg-surface: #FFFFFF;
+    --mimados-bg-subtle: #F1F5F9;
+    --mimados-border: #E2E8F0;
+    --mimados-border-strong: #CBD5E1;
+    --mimados-text-main: #0F172A;
+    --mimados-text-body: #334155;
+    --mimados-text-muted: #64748B;
+
+    /* Restrained Semantic Tones */
+    --mimados-danger: #DC2626;
+    --mimados-danger-hover: #B91C1C;
+    --mimados-danger-subtle: #FEF2F2;
+    --mimados-danger-border: #FECACA;
+    --mimados-warning-subtle: #FEF9C3;
+    --mimados-warning-text: #854D0E;
+    --mimados-warning-border: #FDE047;
+    --mimados-success-subtle: #E6F4F1;
+    --mimados-success-text: #0F5132;
+    --mimados-success-border: #B8E0D8;
+
+    /* Bootstrap 5 Overrides */
+    --bs-primary: #005BB5;
+    --bs-primary-rgb: 0, 91, 181;
+    --bs-primary-text-emphasis: #003A75;
+    --bs-primary-bg-subtle: #EAF2FC;
+    --bs-primary-border-subtle: #C7DDF6;
+    --bs-link-color: #005BB5;
+    --bs-link-color-rgb: 0, 91, 181;
+    --bs-link-hover-color: #004994;
+    --bs-link-hover-color-rgb: 0, 73, 148;
+    --bs-body-bg: #F8FAFC;
+    --bs-body-color: #334155;
+    --bs-border-color: #E2E8F0;
+    --bs-secondary-color: #64748B;
+}
+
+body {
+    background-color: var(--mimados-bg-app) !important;
+    color: var(--mimados-text-body);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--mimados-text-main);
+}
+
 h1:focus {
     outline: none;
 }
 
+/* ==========================================================================
+   ADMINLTE SHELL: HEADER, SIDEBAR & CONTENT (Clínica Ricardo Palma Style)
+   ========================================================================== */
+
+.app-wrapper {
+    background-color: var(--mimados-bg-app);
+}
+
+.app-header.navbar {
+    background-color: var(--mimados-bg-surface) !important;
+    border-bottom: 1px solid var(--mimados-border) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+.app-header .nav-link,
+.app-header .navbar-text {
+    color: var(--mimados-text-body);
+}
+
+.app-sidebar {
+    background-color: var(--mimados-bg-surface) !important;
+    border-right: 1px solid var(--mimados-border) !important;
+    box-shadow: none !important;
+    color: var(--mimados-text-body) !important;
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important;
+}
+
+.sidebar-collapse-btn {
+    position: absolute;
+    top: 20px;
+    right: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--mimados-bg-surface);
+    background-color: #0F172A;
+    color: #FFFFFF;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+    z-index: 1050;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.22);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar-collapse-btn:hover {
+    background-color: var(--mimados-primary);
+}
+
+.sidebar-collapse-icon {
+    transition: transform 0.2s ease;
+    line-height: 1;
+}
+
+body.sidebar-collapse .sidebar-collapse-icon {
+    transform: rotate(180deg);
+}
+
+.app-sidebar .sidebar-brand {
+    background-color: var(--mimados-bg-surface) !important;
+    border-bottom: 1px solid var(--mimados-border) !important;
+    padding: 0.9rem 1.25rem;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-sidebar .brand-link {
+    color: var(--mimados-primary) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+}
+
+.app-sidebar .brand-logo-full {
+    max-height: 62px;
+    width: auto;
+    object-fit: contain;
+}
+
+.app-sidebar .brand-logo-mini {
+    display: none;
+    max-height: 44px;
+    max-width: 56px;
+    width: auto;
+    object-fit: contain;
+}
+
+.app-sidebar .brand-text {
+    color: var(--mimados-primary) !important;
+    letter-spacing: -0.01em;
+}
+
+.app-sidebar .sidebar-wrapper {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.75rem 0.75rem;
+}
+
+.app-sidebar .sidebar-footer {
+    margin-top: auto;
+    padding: 0.75rem;
+    border-top: 1px solid var(--mimados-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.app-sidebar .sidebar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background-color: var(--mimados-bg-subtle);
+}
+
+.app-sidebar .sidebar-user-icon {
+    font-size: 1.35rem;
+    color: var(--mimados-primary);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.app-sidebar .sidebar-user-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.app-sidebar .sidebar-user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--mimados-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-sidebar .sidebar-user-role {
+    font-size: 0.72rem;
+    color: var(--mimados-text-muted);
+    line-height: 1.2;
+}
+
+.app-sidebar .sidebar-logout-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.62rem 0.9rem;
+    border-radius: 8px;
+    color: var(--mimados-text-body);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.92rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-sidebar .sidebar-logout-link:hover {
+    background-color: var(--mimados-danger-subtle);
+    color: var(--mimados-danger);
+}
+
+.app-sidebar .sidebar-logout-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+@media (min-width: 992px) {
+    body.sidebar-mini.sidebar-collapse .app-sidebar {
+        min-width: 78px !important;
+        max-width: 78px !important;
+        width: 78px !important;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-brand {
+        padding: 0.85rem 0.5rem;
+        min-height: 68px;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .brand-logo-full {
+        display: none !important;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .brand-logo-mini {
+        display: block !important;
+        margin: 0 auto;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-wrapper {
+        padding: 0.75rem 0.5rem;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-menu .nav-header {
+        display: none !important;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-menu .nav-link {
+        width: 46px !important;
+        height: 46px !important;
+        margin: 0 auto 0.25rem !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 12px !important;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-menu .nav-link p {
+        display: none !important;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-menu .nav-link .nav-icon {
+        margin: 0 !important;
+        font-size: 1.2rem;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-footer {
+        padding: 0.75rem 0.5rem;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-user-info {
+        width: 46px;
+        height: 46px;
+        margin: 0 auto;
+        padding: 0;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-user-details {
+        display: none;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-logout-link {
+        width: 46px;
+        height: 46px;
+        margin: 0 auto;
+        padding: 0;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    body.sidebar-mini.sidebar-collapse .app-sidebar .sidebar-logout-text {
+        display: none;
+    }
+}
+
+.app-sidebar .nav-header {
+    color: var(--mimados-text-muted) !important;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.75rem 0.85rem 0.35rem;
+}
+
+.app-sidebar .sidebar-menu .nav-item {
+    margin-bottom: 0.2rem;
+}
+
+.app-sidebar .sidebar-menu .nav-link {
+    color: var(--mimados-text-body) !important;
+    border-radius: 8px !important;
+    padding: 0.62rem 0.9rem !important;
+    font-weight: 500;
+    font-size: 0.92rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-sidebar .sidebar-menu .nav-link .nav-icon {
+    color: var(--mimados-text-muted) !important;
+    font-size: 1.05rem;
+    transition: color 0.15s ease;
+}
+
+.app-sidebar .sidebar-menu .nav-link:hover {
+    background-color: var(--mimados-primary-subtle) !important;
+    color: var(--mimados-primary) !important;
+}
+
+.app-sidebar .sidebar-menu .nav-link:hover .nav-icon {
+    color: var(--mimados-primary) !important;
+}
+
+.app-sidebar .sidebar-menu .nav-link.active {
+    background-color: var(--mimados-primary) !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 91, 181, 0.22);
+}
+
+.app-sidebar .sidebar-menu .nav-link.active .nav-icon {
+    color: #FFFFFF !important;
+}
+
+.app-main {
+    background-color: var(--mimados-bg-app) !important;
+}
+
+.app-footer {
+    background-color: var(--mimados-bg-surface) !important;
+    border-top: 1px solid var(--mimados-border) !important;
+    color: var(--mimados-text-muted) !important;
+    font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   BUTTONS & INTERACTIVE CONTROLS
+   ========================================================================== */
+
+.btn-primary {
+    background-color: var(--mimados-primary) !important;
+    border-color: var(--mimados-primary) !important;
+    color: #FFFFFF !important;
+    border-radius: 8px;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--mimados-primary-hover) !important;
+    border-color: var(--mimados-primary-hover) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-outline-primary {
+    color: var(--mimados-primary) !important;
+    border-color: var(--mimados-primary) !important;
+    background-color: transparent;
+    border-radius: 8px;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background-color: var(--mimados-primary) !important;
+    border-color: var(--mimados-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-secondary {
+    background-color: var(--mimados-bg-subtle) !important;
+    border-color: var(--mimados-border-strong) !important;
+    color: var(--mimados-text-body) !important;
+    border-radius: 8px;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: var(--mimados-border) !important;
+    border-color: var(--mimados-border-strong) !important;
+    color: var(--mimados-text-main) !important;
+}
+
+.btn-outline-secondary {
+    color: var(--mimados-text-body) !important;
+    border-color: var(--mimados-border-strong) !important;
+    border-radius: 8px;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    background-color: var(--mimados-bg-subtle) !important;
+    border-color: var(--mimados-border-strong) !important;
+    color: var(--mimados-text-main) !important;
+}
+
+.btn-danger {
+    background-color: var(--mimados-danger) !important;
+    border-color: var(--mimados-danger) !important;
+    color: #FFFFFF !important;
+    border-radius: 8px;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: var(--mimados-danger-hover) !important;
+    border-color: var(--mimados-danger-hover) !important;
+}
+
+.btn-outline-danger {
+    color: var(--mimados-danger) !important;
+    border-color: var(--mimados-danger-border) !important;
+    border-radius: 8px;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus {
+    background-color: var(--mimados-danger) !important;
+    border-color: var(--mimados-danger) !important;
+    color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   CARDS, TABLES, FORMS & BADGES
+   ========================================================================== */
+
+.card {
+    background-color: var(--mimados-bg-surface);
+    border: 1px solid var(--mimados-border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.card-header {
+    background-color: var(--mimados-bg-surface);
+    border-bottom: 1px solid var(--mimados-border);
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+}
+
+.card-header.bg-primary {
+    background-color: var(--mimados-primary) !important;
+    border-bottom-color: var(--mimados-primary-hover) !important;
+}
+
+.card-footer {
+    border-top: 1px solid var(--mimados-border);
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
+.table thead th {
+    background-color: var(--mimados-bg-app) !important;
+    color: var(--mimados-text-muted) !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--mimados-border) !important;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+}
+
+.table > tbody > tr:hover {
+    background-color: var(--mimados-primary-subtle);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--mimados-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 91, 181, 0.16) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--mimados-primary) !important;
+    border-color: var(--mimados-primary) !important;
+}
+
+/* Restrained Clinical Alerts */
+.alert-info {
+    background-color: var(--mimados-primary-subtle) !important;
+    border-color: var(--mimados-primary-border) !important;
+    color: var(--mimados-primary-dark) !important;
+}
+
+.alert-success {
+    background-color: var(--mimados-success-subtle) !important;
+    border-color: var(--mimados-success-border) !important;
+    color: var(--mimados-success-text) !important;
+}
+
+.alert-warning {
+    background-color: var(--mimados-warning-subtle) !important;
+    border-color: var(--mimados-warning-border) !important;
+    color: var(--mimados-warning-text) !important;
+}
+
+.alert-danger {
+    background-color: var(--mimados-danger-subtle) !important;
+    border-color: var(--mimados-danger-border) !important;
+    color: #991B1B !important;
+}
+
+/* Clinical Status Badges */
+.badge-mimados-primary {
+    background-color: var(--mimados-primary-subtle);
+    color: var(--mimados-primary-dark);
+    border: 1px solid var(--mimados-primary-border);
+    font-weight: 600;
+}
+
+.badge-mimados-solid {
+    background-color: var(--mimados-primary);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.badge-mimados-neutral {
+    background-color: var(--mimados-bg-subtle);
+    color: var(--mimados-text-body);
+    border: 1px solid var(--mimados-border);
+    font-weight: 600;
+}
+
+.badge-mimados-danger {
+    background-color: var(--mimados-danger-subtle);
+    color: #991B1B;
+    border: 1px solid var(--mimados-danger-border);
+    font-weight: 600;
+}
+
+.text-primary {
+    color: var(--mimados-primary) !important;
+}
+
+.bg-primary {
+    background-color: var(--mimados-primary) !important;
+}
+
+.border-primary {
+    border-color: var(--mimados-primary) !important;
+}
+
+/* ==========================================================================
+   BLAZOR VALIDATION & ERROR UI
+   ========================================================================== */
+
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--mimados-primary);
 }
 
 .invalid {
-    outline: 1px solid #e50000;
+    outline: 1px solid var(--mimados-danger);
 }
 
 .validation-message {
-    color: #e50000;
+    color: var(--mimados-danger);
 }
 
 .blazor-error-boundary {
@@ -20,19 +607,21 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
     color: var(--bs-secondary-color);
     text-align: end;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
     text-align: start;
 }

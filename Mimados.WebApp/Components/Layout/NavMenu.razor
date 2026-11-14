@@ -5,53 +5,57 @@
     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
         @if (EsAdmin)
         {
-            <li class="nav-header text-uppercase text-secondary mt-2">ADMINISTRACIÓN</li>
+            <li class="nav-header text-uppercase text-secondary mt-2">PRINCIPAL</li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="admin/inicio">
+                <NavLink class="nav-link" href="admin/inicio" Match="NavLinkMatch.All" title="Inicio">
                     <i class="nav-icon bi bi-house-door-fill"></i>
                     <p>Inicio</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="empleados">
-                    <i class="nav-icon bi bi-people-fill"></i>
-                    <p>Empleados</p>
+                <NavLink class="nav-link" href="admin/perfil" Match="NavLinkMatch.All" title="Mi Perfil">
+                    <i class="nav-icon bi bi-person"></i>
+                    <p>Mi Perfil</p>
                 </NavLink>
             </li>
+
+            <li class="nav-header text-uppercase text-secondary mt-2">GESTIÓN</li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="sede/administrar">
+                <NavLink class="nav-link" href="sede/administrar" Match="NavLinkMatch.Prefix" title="Sedes">
                     <i class="nav-icon bi bi-building"></i>
                     <p>Sedes</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="servicio/administrar">
+                <NavLink class="nav-link" href="servicio/administrar" Match="NavLinkMatch.Prefix" title="Servicios">
                     <i class="nav-icon bi bi-briefcase"></i>
                     <p>Servicios</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="horarios">
+                <NavLink class="nav-link" href="empleados" Match="NavLinkMatch.Prefix" title="Empleados">
+                    <i class="nav-icon bi bi-people-fill"></i>
+                    <p>Empleados</p>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="horarios" Match="NavLinkMatch.Prefix" title="Horarios">
                     <i class="nav-icon bi bi-clock-fill"></i>
                     <p>Horarios</p>
                 </NavLink>
             </li>
+
+            <li class="nav-header text-uppercase text-secondary mt-2">REPORTES</li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="reportes/citas">
+                <NavLink class="nav-link" href="reportes/citas" Match="NavLinkMatch.Prefix" title="Reporte de Citas">
                     <i class="nav-icon bi bi-file-earmark-bar-graph-fill"></i>
-                    <p>Reporte Citas</p>
+                    <p>Reporte de Citas</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="reporte/servicios">
+                <NavLink class="nav-link" href="reporte/servicios" Match="NavLinkMatch.Prefix" title="Reporte de Servicios">
                     <i class="nav-icon bi bi-graph-up"></i>
-                    <p>Reporte Servicios</p>
-                </NavLink>
-            </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="admin/perfil">
-                    <i class="nav-icon bi bi-person-fill"></i>
-                    <p>Mi Perfil</p>
+                    <p>Reporte de Servicios</p>
                 </NavLink>
             </li>
         }
@@ -59,70 +63,63 @@
         {
             <li class="nav-header text-uppercase text-secondary mt-2">OPERACIÓN CLÍNICA</li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="veterinario/citas">
-                    <i class="nav-icon bi bi-calendar-check-fill"></i>
-                    <p>Citas Asignadas</p>
-                </NavLink>
-            </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="veterinario/historial">
-                    <i class="nav-icon bi bi-journal-medical"></i>
-                    <p>Historial Paciente</p>
-                </NavLink>
-            </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="veterinario/atenciones/nueva">
-                    <i class="nav-icon bi bi-clipboard2-pulse-fill"></i>
-                    <p>Registrar Atención</p>
-                </NavLink>
-            </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="empleado/citas" Match="NavLinkMatch.Prefix">
+                <NavLink class="nav-link" href="empleado/citas" Match="NavLinkMatch.Prefix" title="Gestión de Citas">
                     <i class="nav-icon bi bi-calendar3"></i>
                     <p>Gestión de Citas</p>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="veterinario/historial" Match="NavLinkMatch.Prefix" title="Historial de Pacientes">
+                    <i class="nav-icon bi bi-journal-medical"></i>
+                    <p>Historial de Pacientes</p>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="veterinario/atenciones/nueva" Match="NavLinkMatch.All" title="Registrar Atención">
+                    <i class="nav-icon bi bi-clipboard2-pulse-fill"></i>
+                    <p>Registrar Atención</p>
                 </NavLink>
             </li>
         }
         else
         {
-            <li class="nav-header text-uppercase text-secondary mt-2">ÁREA CLIENTE</li>
+            <li class="nav-header text-uppercase text-secondary mt-2">MI ESPACIO</li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="cliente/mascotas" Match="NavLinkMatch.All">
+                <NavLink class="nav-link" href="cliente/inicio" Match="NavLinkMatch.All" title="Inicio">
+                    <i class="nav-icon bi bi-house-door"></i>
+                    <p>Inicio</p>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="cliente/perfil" Match="NavLinkMatch.All" title="Mi Perfil">
+                    <i class="nav-icon bi bi-person"></i>
+                    <p>Mi Perfil</p>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="cliente/mascotas" Match="NavLinkMatch.Prefix" title="Mis Mascotas">
                     <i class="nav-icon bi bi-heart-pulse"></i>
                     <p>Mis Mascotas</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="cliente/citas" Match="NavLinkMatch.All">
+                <NavLink class="nav-link" href="cliente/citas" Match="NavLinkMatch.All" title="Mis Citas">
                     <i class="nav-icon bi bi-calendar-check"></i>
                     <p>Mis Citas</p>
                 </NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="cliente/citas/nueva">
+                <NavLink class="nav-link" href="cliente/citas/nueva" Match="NavLinkMatch.All" title="Reservar Cita">
                     <i class="nav-icon bi bi-calendar-plus"></i>
                     <p>Reservar Cita</p>
                 </NavLink>
             </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="cliente/citas/disponibilidad">
-                    <i class="nav-icon bi bi-clock-history"></i>
-                    <p>Disponibilidad</p>
-                </NavLink>
-            </li>
-            <li class="nav-item">
-                <NavLink class="nav-link" href="cliente/perfil">
-                    <i class="nav-icon bi bi-person-circle"></i>
-                    <p>Mi Perfil</p>
-                </NavLink>
-            </li>
         }
 
-        <li class="nav-header text-uppercase text-secondary mt-2">SESIÓN</li>
         <li class="nav-item">
-            <a class="nav-link text-danger" href="/auth/logout">
-                <i class="nav-icon bi bi-box-arrow-right"></i>
-                <p>Cerrar Sesión</p>
+            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#contactanosModal" title="Contáctanos">
+                <i class="nav-icon bi bi-telephone"></i>
+                <p>Contáctanos</p>
             </a>
         </li>
     </ul>

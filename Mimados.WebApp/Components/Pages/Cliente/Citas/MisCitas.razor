@@ -18,19 +18,19 @@
                 Consulta y administra tus reservas veterinarias.
             </p>
         </div>
-        <a class="btn btn-success" href="/cliente/citas/nueva">
+        <a class="btn btn-primary" href="/cliente/citas/nueva">
             <i class="bi bi-calendar-plus me-1"></i>
             Reservar Nueva Cita
         </a>
     </div>
 
-    <div class="card shadow-sm border-0 bg-light">
+    <div class="card shadow-sm border-0 bg-white">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold">
-                <i class="bi bi-calendar-check text-success me-2"></i>
+                <i class="bi bi-calendar-check text-primary me-2"></i>
                 Mis reservas
             </h5>
-            <a class="btn btn-outline-success btn-sm"
+            <a class="btn btn-outline-primary btn-sm"
                href="/cliente/citas/disponibilidad">
                 Ver disponibilidad
             </a>
@@ -84,7 +84,7 @@
                                             </a>
                                             @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
                                             {
-                                                <a class="btn btn-outline-warning btn-sm"
+                                                <a class="btn btn-outline-secondary btn-sm"
                                                    href="@($"/cliente/citas/editar/{cita.CitaId}")">
                                                     Editar
                                                 </a>
@@ -153,9 +153,9 @@
                 .ToList();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = "No se pudieron cargar las citas: " + ex.Message;
+            mensajeError = "No se pudieron cargar tus citas. Inténtalo nuevamente.";
         }
         finally
         {
@@ -167,12 +167,12 @@
     {
         return estado?.ToUpperInvariant() switch
         {
-            "CONFIRMADA" => "bg-success",
-            "PROGRAMADA" => "bg-primary",
-            "ATENDIDA" => "bg-secondary",
-            "CANCELADA" => "bg-danger",
-            "NO_ASISTIO" => "bg-warning text-dark",
-            _ => "bg-secondary"
+            "CONFIRMADA" => "badge-mimados-solid",
+            "PROGRAMADA" => "badge-mimados-primary",
+            "ATENDIDA" => "badge-mimados-neutral",
+            "CANCELADA" => "badge-mimados-danger",
+            "NO_ASISTIO" => "badge-mimados-neutral",
+            _ => "badge-mimados-neutral"
         };
     }
 }

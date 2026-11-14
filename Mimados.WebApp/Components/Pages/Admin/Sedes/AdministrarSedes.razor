@@ -10,7 +10,7 @@
         <h2><i class="bi bi-building-fill me-2"></i>Administrar Sedes</h2>
         
         
-            <a href="/sede/crear" class="btn btn-success shadow-sm">
+            <a href="/sede/crear" class="btn btn-primary shadow-sm">
                 <i class="bi bi-building-fill-add me-1"></i>Crear Sede
             </a>
 
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Tabla paginada de clientes. (tipo de dato a usar, ,onchanged) -->
-    <Card Title="Users"
+    <Card Title="Lista de Sedes"
           FooterClass="text-secondary small"
           BodyClass="p-0">
         
@@ -108,16 +108,16 @@
                                     @if (sed.Activo)
                                     {
 
-                                        <span class="badge bg-success px-2 py-1">Activo</span>
+                                        <span class="badge badge-mimados-primary px-2 py-1">Activo</span>
                                     }
                                     else
                                     {
 
-                                        <span class="badge bg-danger px-2 py-1">Inactivo</span>
+                                        <span class="badge badge-mimados-danger px-2 py-1">Inactivo</span>
                                     }
                                 </td>
                                 <td>
-                                    <a href="@($"/sede/administrar/editar/{sed.Id}")" class="btn btn-warning btn-sm">
+                                    <a href="@($"/sede/administrar/editar/{sed.Id}")" class="btn btn-outline-primary btn-sm">
                                         <i class="bi bi-eye"></i> Ver
                                     </a>
                                 </td>
@@ -163,9 +163,9 @@
         {
             sedes = await SedeService.ObtenerSedesAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = "Error al obtener las sedes: " + ex.Message;
+            mensajeError = "No se pudieron cargar las sedes. Inténtalo nuevamente.";
         }
         finally
         {
@@ -175,14 +175,12 @@
 
 
     private void AplicarFiltros(){
-        Console.WriteLine("aplicando filtros");
 
     }
     private async Task LimpiarFiltros(){
         filtroDireccion=String.Empty;
         filtroNombre=String.Empty;
         await CargarDatos();
-        Console.WriteLine("limpiando filtros");
 
     }
 

@@ -1,10 +1,11 @@
-﻿using System.Text;
+using Mimados.WebApp.Services.Interfaces;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Mimados.WebApp.Models;
 
 
-namespace Mimados.WebApp.Services;
+namespace Mimados.WebApp.Services.Implementations;
 
     public class MascotaService : IMascotaService
 {
@@ -16,6 +17,11 @@ namespace Mimados.WebApp.Services;
     {
         _httpClient = httpClient;
         _logger = logger;
+    }
+
+    public string ObtenerUrlPdfHistorial(int mascotaId)
+    {
+        return new Uri(_httpClient.BaseAddress!, $"{PATH}/historial/{mascotaId}/pdf").ToString();
     }
 
     public async Task<Mascota?> ObtenerMascotaPorIdAsync(int mascotaId)
@@ -184,21 +190,6 @@ namespace Mimados.WebApp.Services;
 
 
 
-
-    private class MascotaJavaResponse
-    {
-        public int Id { get; set; }
-        public string? Nombre { get; set; }
-        public string? Especie { get; set; }
-        public string? Raza { get; set; }
-        public string? Sexo { get; set; }
-        public DateTime? FechaNacimiento { get; set; }
-        public decimal? PesoReferencial { get; set; }
-        public bool Activo { get; set; }
-        public ClienteJavaResponse? Cliente { get; set; }
-    }
-    private class ClienteJavaResponse { public UsuarioJavaResponse? Usuario { get; set; } }
-    private class UsuarioJavaResponse { public int Id { get; set; } }
 
 }
 

@@ -81,7 +81,7 @@
     </div>
     <div class="card-footer bg-light d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline-secondary" @onclick="Volver">Cancelar</button>
-        <button type="button" class="btn btn-success fw-bold" @onclick="GuardarEmpleado" disabled="@cargando">
+        <button type="button" class="btn btn-primary fw-bold" @onclick="GuardarEmpleado" disabled="@cargando">
             @(cargando ? "Guardando..." : "Guardar Empleado")
         </button>
     </div>
@@ -111,12 +111,12 @@
             }
             else
             {
-                mensajeAlerta = respuesta?.Message ?? "Error al registrar el empleado en la base de datos.";
+                mensajeAlerta = respuesta?.Message ?? "No se pudo registrar el empleado. Verifica los datos.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeAlerta = $"Error de conexión con el backend: {ex.Message}";
+            mensajeAlerta = "No se pudo conectar con el servidor. Inténtalo nuevamente.";
         }
         finally
         {

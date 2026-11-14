@@ -19,15 +19,15 @@
     }
     else
     {
-        <div class="card p-4 shadow-sm border-0 bg-light">
+        <div class="card p-4 shadow-sm border-0 bg-white">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 class="fw-bold mb-0">
-                    <i class="bi @(EsEdicion ? "bi-pencil-square" : "bi-calendar2-plus") text-success me-2"></i>
+                    <i class="bi @(EsEdicion ? "bi-pencil-square" : "bi-calendar2-plus") text-primary me-2"></i>
                     @(EsEdicion ? "Datos de la cita" : "Datos de la nueva cita")
                 </h5>
                 @if (EsEdicion)
                 {
-                    <span class="badge @(estado == "Confirmada" ? "bg-success" : estado == "Pendiente" ? "bg-warning text-dark" : "bg-secondary")">@estado</span>
+                    <span class="badge @(estado == "Confirmada" ? "badge-mimados-solid" : estado == "Pendiente" ? "badge-mimados-primary" : "badge-mimados-neutral")">@estado</span>
                 }
             </div>
             <div class="row">
@@ -84,7 +84,7 @@
             </div>
             <div class="d-flex justify-content-end gap-2 flex-wrap">
                 <a href="/empleado/citas" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="button" class="btn @(EsEdicion ? "btn-warning" : "btn-success") fw-bold px-4" @onclick="GuardarCita">
+                <button type="button" class="btn btn-primary fw-bold px-4" @onclick="GuardarCita">
                     <i class="bi bi-save me-1"></i> @(EsEdicion ? "Guardar Cambios" : "Registrar Cita")
                 </button>
             </div>

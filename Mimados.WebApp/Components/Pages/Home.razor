@@ -16,11 +16,11 @@
             }
             else if (user.IsInRole("Veterinario") || user.IsInRole("Empleado"))
             {
-                Nav.NavigateTo("/veterinario/citas");
+                Nav.NavigateTo("/empleado/citas");
             }
             else
             {
-                Nav.NavigateTo("/cliente/mascotas");
+                Nav.NavigateTo("/cliente/inicio");
             }
         }
         else

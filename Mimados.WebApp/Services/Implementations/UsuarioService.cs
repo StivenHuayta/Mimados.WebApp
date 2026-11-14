@@ -1,63 +1,59 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using Mimados.WebApp.Models;
+using Mimados.WebApp.Services.Interfaces;
 
-namespace Mimados.WebApp.Services
+namespace Mimados.WebApp.Services.Implementations;
+
+public class UsuarioService : IUsuarioService
 {
-    public class UsuarioService : IUsuarioService
+    private const string PATH = "UsuarioRS";
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<UsuarioService> _logger;
+
+    public UsuarioService(HttpClient httpClient, ILogger<UsuarioService> logger)
     {
-        private readonly HttpClient _httpClient;
+        _httpClient = httpClient;
+        _logger = logger;
+    }
 
-        private const string PATH = "PerfilRS";
-
-        public UsuarioService(HttpClient httpClient)
+    public async Task<UsuarioPerfilModel?> ObtenerPerfilAsync(int idUsuario)
+    {
+        try
         {
-            _httpClient = httpClient;
+            return await _httpClient.GetFromJsonAsync<UsuarioPerfilModel>($"{PATH}/perfil/{idUsuario}");
         }
-
-        public async Task<UsuarioPerfilModel?> ObtenerPerfilAsync(int idUsuario)
+        catch (Exception ex)
         {
-            try
-            {
-                return await _httpClient.GetFromJsonAsync<UsuarioPerfilModel>($"{PATH}/{idUsuario}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al obtener el perfil: {ex.Message}");
-                return null;
-            }
+            _logger.LogError(ex, "Error al obtener el perfil del usuario {IdUsuario}", idUsuario);
+            return null;
         }
+    }
 
-        public async Task<bool> ActualizarPerfilAsync(UsuarioPerfilModel perfil)
+    public async Task<bool> ActualizarPerfilAsync(UsuarioPerfilModel perfil)
+    {
+        try
         {
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync($"{PATH}/actualizar", perfil);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al actualizar: {ex.Message}");
-                return false;
-            }
+            var response = await _httpClient.PutAsJsonAsync($"{PATH}/perfil", perfil);
+            return response.IsSuccessStatusCode;
         }
-
-
-        public async Task<bool> EliminarCuentaLogicaAsync(int idUsuario)
+        catch (Exception ex)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"{PATH}/eliminar/{idUsuario}");
-
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al eliminar la cuenta: {ex.Message}");
-                return false;
-            }
+            _logger.LogError(ex, "Error al actualizar el perfil del usuario {IdUsuario}", perfil.Id);
+            return false;
         }
+    }
 
-
-
+    public async Task<bool> EliminarCuentaLogicaAsync(int idUsuario)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"{PATH}/eliminar/{idUsuario}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar la cuenta del usuario {IdUsuario}", idUsuario);
+            return false;
+        }
     }
 }

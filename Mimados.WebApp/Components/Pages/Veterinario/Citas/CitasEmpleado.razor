@@ -9,10 +9,10 @@
             <h2 class="mb-1">Gestión de Citas</h2>
             <p class="text-muted mb-0">Consulta y administra las citas de los pacientes.</p>
         </div>
-        <a class="btn btn-success" href="/empleado/citas/nueva"><i class="bi bi-calendar-plus me-1"></i> Registrar Nueva Cita</a>
+        <a class="btn btn-primary" href="/empleado/citas/nueva"><i class="bi bi-calendar-plus me-1"></i> Registrar Nueva Cita</a>
     </div>
 
-    <div class="card shadow-sm border-0 bg-light mb-4 p-3">
+    <div class="card shadow-sm border-0 bg-white mb-4 p-3">
         <div class="row align-items-end">
             <div class="col-md-4 mb-2">
                 <label for="emp-buscar" class="form-label fw-bold">Buscar cliente o mascota:</label>
@@ -32,13 +32,13 @@
                 </select>
             </div>
             <div class="col-md-2 mb-2 d-grid">
-                <button type="button" class="btn btn-outline-success" @onclick="BuscarCitas"><i class="bi bi-search me-1"></i> Buscar</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="BuscarCitas"><i class="bi bi-search me-1"></i> Buscar</button>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm border-0 bg-light">
-        <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-calendar3 text-success me-2"></i>Listado de Citas</h5></div>
+    <div class="card shadow-sm border-0 bg-white">
+        <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-calendar3 text-primary me-2"></i>Listado de Citas</h5></div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -60,7 +60,7 @@
                                 <td class="text-end pe-3">
                                     <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
                                         <a class="btn btn-outline-primary btn-sm" href="@($"/empleado/citas/detalle/{cita.Id}")">Ver</a>
-                                        <a class="btn btn-outline-warning btn-sm" href="@($"/empleado/citas/editar/{cita.Id}")">Editar</a>
+                                        <a class="btn btn-outline-secondary btn-sm" href="@($"/empleado/citas/editar/{cita.Id}")">Editar</a>
                                         <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => MostrarEliminar(cita.Id)">Eliminar</button>
                                     </div>
                                 </td>
@@ -130,10 +130,10 @@
 
     private static string ClaseEstado(string estado) => estado switch
     {
-        "Confirmada" => "bg-success",
-        "Pendiente" => "bg-warning text-dark",
-        "Cancelada" => "bg-danger",
-        _ => "bg-secondary"
+        "Confirmada" => "badge-mimados-solid",
+        "Pendiente" => "badge-mimados-primary",
+        "Cancelada" => "badge-mimados-danger",
+        _ => "badge-mimados-neutral"
     };
 
     private sealed record CitaListado(int Id, string Codigo, string Cliente,

@@ -15,7 +15,7 @@
         </button>
     </div>
 
-    <div class="card p-4 shadow-sm border-0 bg-light">
+    <div class="card p-4 shadow-sm border-0 bg-white">
         <EditForm Model="@nuevoServicio" OnValidSubmit="GuardarServicio">
             <DataAnnotationsValidator />
 
@@ -51,7 +51,7 @@
             
 
             <div class="text-end">
-                <button type="submit" class="btn btn-success px-4 fw-bold" >
+                <button type="submit" class="btn btn-primary px-4 fw-bold" >
                     <i class="bi bi-save"></i> Guardar Servicio
 
                 </button>
@@ -71,7 +71,6 @@
     {
         // Aquí simulamos que se guarda en la Base de Datos.
         // Más adelante, aquí usarás HttpClient para hacer el POST al servidor.
-        Console.WriteLine($"Simulando registro de sede: {nuevoServicio.Nombre}");
         
         // Redirigimos al usuario de regreso a su grilla usando NavigationManager[cite: 5]
         Nav.NavigateTo("/servicio/administrar");
@@ -101,12 +100,12 @@
             }
             else
             {
-                mensajeError = "El servidor no pudo registrar el servicio. Verifica los datos.";
+                mensajeError = "No se pudo registrar el servicio. Verifica los datos.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = $"Ocurrió un error inesperado: {ex.Message}";
+            mensajeError = "No se pudo registrar el servicio. Inténtalo nuevamente.";
         }
         finally
         {
