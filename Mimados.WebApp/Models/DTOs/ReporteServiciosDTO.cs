@@ -1,4 +1,4 @@
-﻿namespace Mimados.WebApp.Models.DTOs
+﻿namespace Mimados.WebApp.Models
 {
     public class ReporteServiciosDTO
     {

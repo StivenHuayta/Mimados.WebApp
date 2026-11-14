@@ -1,5 +1,8 @@
 @page "/reporte/servicios"
-@using Mimados.WebApp.Models.DTOs
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services
+@inject IReporteService ReporteService
+@rendermode InteractiveServer
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -40,6 +43,14 @@
             </div>
         </div>
     </div>
+    <!-- Mensaje de Error si las fechas no son válidas -->
+    @if (fechasNoValidas)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="CerrarMensajeError"></button>
+        </div>
+    }
 
 
         <!-- Resultados del Reporte -->
@@ -75,8 +86,8 @@
                                     <td>@c.Orden</td>
                                     <td>@c.Nombre</td>
                                     <td>@c.Cantidad</td>
-                                    <td>@c.Precio</td>
-                                    <td>@c.Total</td>
+                                    <td>@c.Precio.ToString("N2")</td>
+                                    <td>@c.Total.ToString("N2")</td>
                                     <td>@c.Proporcion</td>
                                 </tr>
                             }
@@ -89,13 +100,54 @@
 </div>
 
 @code {
-    private DateTime? filtroFechaInicio;
-    private DateTime? filtroFechaFin;
+    private DateOnly? filtroFechaInicio;
+    private DateOnly? filtroFechaFin;
     private string filtroSede = "";
 
-    private void AplicarFiltros()
+    private string mensajeError = "";
+    private bool fechasNoValidas = false;
+
+    private bool ValidarFechas()
     {
-        Console.WriteLine("Filtrando Ando");
+        if (filtroFechaInicio.HasValue && filtroFechaFin.HasValue)
+        {
+            if (filtroFechaInicio >= filtroFechaFin)
+            {
+                mensajeError = "La fecha de inicio debe ser anterior a la fecha de fin.";
+                fechasNoValidas = true;
+                return false;
+            }
+        }
+        fechasNoValidas = false;
+        return true;
+    }
+    private void CerrarMensajeError()
+    {
+        fechasNoValidas = false;
+        mensajeError = string.Empty;
+    }
+    private async Task AplicarFiltros()
+    {
+        if (!ValidarFechas())
+        {
+            Console.WriteLine("entro a error de fechas");
+
+            return;
+        }
+
+        try
+        {
+            serviciosPopulares=await ReporteService.ObtenerReporteServiciosPorFechas(filtroFechaInicio, filtroFechaFin);
+            Console.WriteLine("Filtrando Ando");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("atrapo algo");
+
+            mensajeError = "Error al obtener los servicios: " + ex.Message;
+            // Manejo de errores
+        }
+        
     }
 
     private void LimpiarFiltros()

@@ -35,6 +35,8 @@ builder.Services.AddHttpClient<IUsuarioService, UsuarioService>(ConfigureClient)
 builder.Services.AddHttpClient<ISedeService, SedeService>(ConfigureClient);
 builder.Services.AddHttpClient<IServicioService, ServicioService>(ConfigureClient);
 builder.Services.AddHttpClient<ISedeServicioService, SedeServicioService>(ConfigureClient);
+//nuevos
+builder.Services.AddHttpClient<IReporteService, ReporteService>(ConfigureClient);
 
 // Servicios de la aplicación en memoria / estado
 builder.Services.AddSingleton<VeterinariaMockDataService>();
