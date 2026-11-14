@@ -6,12 +6,34 @@
 @inject IMascotaService MascotaService
 
 <div class="container mt-4">
-    @* Cabecera con título y botón de acción principal *@
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Mis Mascotas</h2>
-        <button class="btn btn-primary" @onclick="IrANuevaMascota">
-            + Registrar Nueva Mascota
-        </button>
+    @* Cabecera con título y botones de acción *@
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="mb-0">@(viendoDadasDeBaja ? "Mascotas dadas de baja" : "Mis Mascotas")</h2>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button"
+                    class="btn @(viendoDadasDeBaja ? "btn-outline-primary" : "btn-outline-secondary")"
+                    @onclick="AlternarVistaDadasDeBaja">
+                @if (viendoDadasDeBaja)
+                {
+                    <i class="bi bi-arrow-left me-1"></i>
+                    <span>Ver mascotas activas (@MascotasActivas.Count)</span>
+                }
+                else
+                {
+                    <i class="bi bi-archive me-1"></i>
+                    <span>Dadas de baja (@MascotasInactivas.Count)</span>
+                }
+            </button>
+
+            @if (!viendoDadasDeBaja)
+            {
+                <button class="btn btn-primary" @onclick="IrANuevaMascota">
+                    + Registrar Nueva Mascota
+                </button>
+            }
+        </div>
     </div>
 
     @* Grilla de Tarjetas usando Bootstrap *@
@@ -22,80 +44,90 @@
                 <div class="alert alert-info">Cargando tus mascotas...</div>
             </div>
         }
-        else if (!listaMascotas.Any())
+        else if (!MascotasVisibles.Any())
         {
             <div class="col-12">
-                <div class="alert alert-warning">Aún no tienes mascotas registradas.</div>
+                <div class="alert @(viendoDadasDeBaja ? "alert-info" : "alert-warning")">
+                    @(viendoDadasDeBaja
+                        ? "No tienes mascotas dadas de baja."
+                        : "Aún no tienes mascotas activas registradas.")
+                </div>
             </div>
         }
         else
         {
-            @foreach (var mascota in listaMascotas)
+            @foreach (var mascota in MascotasVisibles)
             {
                 bool tieneAtenciones = mascotasConAtenciones.Contains(mascota.MascotaId);
                 bool menuAbierto = menuAbiertoMascotaId == mascota.MascotaId;
 
                 <div class="col">
                     <div class="card h-100 shadow-sm bg-white mascota-card" @onclick="() => IrAHistorial(mascota.MascotaId)">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center gap-2 px-3 py-3">
-                            <h5 class="mb-0 fw-bold text-white text-truncate">
+                        <div class="card-header @(mascota.Activo ? "bg-primary text-white" : "bg-secondary bg-opacity-10 text-dark") d-flex justify-content-between align-items-center gap-2 px-3 py-3">
+                            <h5 class="mb-0 fw-bold @(mascota.Activo ? "text-white" : "text-dark") text-truncate">
                                 @mascota.Nombre
                             </h5>
                             <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0" @onclick:stopPropagation="true">
-                                <span class="badge bg-white text-primary">@mascota.Especie</span>
+                                <span class="badge @(mascota.Activo ? "bg-white text-primary" : "badge-mimados-neutral")">@mascota.Especie</span>
 
-                                <div class="dropdown position-relative d-inline-flex align-items-center">
-                                    <button type="button"
-                                            class="btn-card-menu"
-                                            aria-label="Opciones de @mascota.Nombre"
-                                            @onclick="() => AlternarMenu(mascota.MascotaId)">
-                                        <i class="bi bi-three-dots-vertical fs-5"></i>
-                                    </button>
+                                @if (mascota.Activo)
+                                {
+                                    <div class="dropdown position-relative d-inline-flex align-items-center">
+                                        <button type="button"
+                                                class="btn-card-menu"
+                                                aria-label="Opciones de @mascota.Nombre"
+                                                @onclick="() => AlternarMenu(mascota.MascotaId)">
+                                            <i class="bi bi-three-dots-vertical fs-5"></i>
+                                        </button>
 
-                                    @if (menuAbierto)
-                                    {
-                                        <ul class="dropdown-menu dropdown-menu-end show shadow-sm" style="position: absolute; right: 0; top: 100%; z-index: 1050;">
-                                            <li>
-                                                <button type="button" class="dropdown-item" @onclick="() => EditarDesdeMenu(mascota.MascotaId)">
-                                                    <i class="bi bi-pencil me-2 text-primary"></i>Editar
-                                                </button>
-                                            </li>
-                                            <li><hr class="dropdown-divider" /></li>
-                                            <li>
-                                                @if (tieneAtenciones)
-                                                {
-                                                    <span class="dropdown-item text-muted disabled" title="No se puede dar de baja porque tiene atenciones registradas">
-                                                        <i class="bi bi-lock me-2"></i>Dar de baja (con atenciones)
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <button type="button" class="dropdown-item text-danger" @onclick="() => SolicitarEliminacionDesdeMenu(mascota)">
-                                                        <i class="bi bi-trash me-2"></i>Dar de baja
+                                        @if (menuAbierto)
+                                        {
+                                            <ul class="dropdown-menu dropdown-menu-end show shadow-sm" style="position: absolute; right: 0; top: 100%; z-index: 1050;">
+                                                <li>
+                                                    <button type="button" class="dropdown-item" @onclick="() => EditarDesdeMenu(mascota.MascotaId)">
+                                                        <i class="bi bi-pencil me-2 text-primary"></i>Editar
                                                     </button>
-                                                }
-                                            </li>
-                                        </ul>
-                                    }
-                                </div>
+                                                </li>
+                                                <li><hr class="dropdown-divider" /></li>
+                                                <li>
+                                                    @if (tieneAtenciones)
+                                                    {
+                                                        <span class="dropdown-item text-muted disabled" title="No se puede dar de baja porque tiene atenciones registradas">
+                                                            <i class="bi bi-lock me-2"></i>Dar de baja (con atenciones)
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="dropdown-item text-danger" @onclick="() => SolicitarBajaDesdeMenu(mascota)">
+                                                            <i class="bi bi-archive me-2"></i>Dar de baja
+                                                        </button>
+                                                    }
+                                                </li>
+                                            </ul>
+                                        }
+                                    </div>
+                                }
                             </div>
                         </div>
 
                         <div class="card-body d-flex flex-column">
                             <p class="mb-1"><strong>Raza:</strong> @(string.IsNullOrWhiteSpace(mascota.Raza) ? "No registrada" : mascota.Raza)</p>
                             <p class="mb-1"><strong>Sexo:</strong> @mascota.Sexo</p>
-                            <p class="mb-1">
-                                <strong>Edad:</strong> @FormatearEdad(mascota.FechaNacimiento)
-                                @if (mascota.FechaNacimiento.HasValue)
-                                {
-                                    <span class="text-muted small ms-1">(@mascota.FechaNacimiento.Value.ToString("dd/MM/yyyy"))</span>
-                                }
-                            </p>
+                            @if (mascota.Activo)
+                            {
+                                <p class="mb-1">
+                                    <strong>Edad:</strong> @FormatearEdad(mascota.FechaNacimiento)
+                                    @if (mascota.FechaNacimiento.HasValue)
+                                    {
+                                        <span class="text-muted small ms-1">(@mascota.FechaNacimiento.Value.ToString("dd/MM/yyyy"))</span>
+                                    }
+                                </p>
+                            }
                             <p class="mb-3"><strong>Último peso:</strong> @(mascota.PesoReferencial.HasValue ? $"{mascota.PesoReferencial.Value:0.0} kg" : "No registrado")</p>
 
                             <div class="mt-auto d-grid">
                                 <button type="button"
-                                        class="btn btn-primary btn-sm fw-semibold"
+                                        class="btn @(mascota.Activo ? "btn-primary" : "btn-outline-primary") btn-sm fw-semibold"
                                         @onclick:stopPropagation="true"
                                         @onclick="() => IrAHistorial(mascota.MascotaId)">
                                     <i class="bi bi-journal-medical me-1"></i> Ver Ficha / Historial
@@ -108,30 +140,30 @@
         }
     </div>
 
-    @if (mostrarModalEliminar && mascotaAEliminar != null)
+    @if (mostrarModalBaja && mascotaADarDeBaja != null)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-danger text-white">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title fw-bold text-white">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>¿Dar de baja a @mascotaAEliminar.Nombre?
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>¿Dar de baja a @mascotaADarDeBaja.Nombre?
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" @onclick="CancelarEliminacion" disabled="@eliminando"></button>
+                        <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" @onclick="CancelarBaja" disabled="@procesandoBaja"></button>
                     </div>
                     <div class="modal-body p-4">
                         <p class="mb-2">
-                            Estás a punto de dar de baja a <strong>@mascotaAEliminar.Nombre</strong> (@mascotaAEliminar.Especie).
+                            Estás a punto de dar de baja a <strong>@mascotaADarDeBaja.Nombre</strong> (@mascotaADarDeBaja.Especie).
                         </p>
-                        <div class="alert alert-danger small mb-0">
+                        <div class="alert alert-warning small mb-0">
                             <i class="bi bi-info-circle-fill me-1"></i>
-                            <strong>Advertencia:</strong> La mascota se eliminará permanentemente junto con todos sus datos e historial. Esta acción no se puede deshacer.
+                            <strong>Aviso:</strong> Ya no se le podrán sacar nuevas citas y pasará al apartado de <strong>Mascotas dadas de baja</strong>.
                         </div>
                     </div>
                     <div class="modal-footer bg-white">
-                        <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion" disabled="@eliminando">Cancelar</button>
-                        <button type="button" class="btn btn-danger fw-semibold" @onclick="ConfirmarEliminacion" disabled="@eliminando">
-                            @(eliminando ? "Eliminando..." : "Sí, dar de baja")
+                        <button type="button" class="btn btn-secondary" @onclick="CancelarBaja" disabled="@procesandoBaja">Cancelar</button>
+                        <button type="button" class="btn btn-danger fw-semibold" @onclick="ConfirmarBaja" disabled="@procesandoBaja">
+                            @(procesandoBaja ? "Procesando..." : "Sí, dar de baja")
                         </button>
                     </div>
                 </div>
@@ -148,10 +180,20 @@
     private HashSet<int> mascotasConAtenciones = new();
     private int idClienteLogueado = 0;
 
+    private bool viendoDadasDeBaja = false;
     private int? menuAbiertoMascotaId;
-    private Mimados.WebApp.Models.Mascota? mascotaAEliminar;
-    private bool mostrarModalEliminar = false;
-    private bool eliminando = false;
+    private Mimados.WebApp.Models.Mascota? mascotaADarDeBaja;
+    private bool mostrarModalBaja = false;
+    private bool procesandoBaja = false;
+
+    private List<Mimados.WebApp.Models.Mascota> MascotasActivas =>
+        listaMascotas?.Where(m => m.Activo).ToList() ?? new();
+
+    private List<Mimados.WebApp.Models.Mascota> MascotasInactivas =>
+        listaMascotas?.Where(m => !m.Activo).ToList() ?? new();
+
+    private List<Mimados.WebApp.Models.Mascota> MascotasVisibles =>
+        viendoDadasDeBaja ? MascotasInactivas : MascotasActivas;
 
     protected override async Task OnInitializedAsync()
     {
@@ -199,6 +241,12 @@
                 mascotasConAtenciones.Add(item.MascotaId);
             }
         }
+    }
+
+    private void AlternarVistaDadasDeBaja()
+    {
+        menuAbiertoMascotaId = null;
+        viendoDadasDeBaja = !viendoDadasDeBaja;
     }
 
     private static string FormatearEdad(DateTime? fechaNacimiento)
@@ -259,34 +307,34 @@
         IrAEditarMascota(id);
     }
 
-    private void SolicitarEliminacionDesdeMenu(Mimados.WebApp.Models.Mascota mascota)
+    private void SolicitarBajaDesdeMenu(Mimados.WebApp.Models.Mascota mascota)
     {
         menuAbiertoMascotaId = null;
         if (mascotasConAtenciones.Contains(mascota.MascotaId)) return;
-        mascotaAEliminar = mascota;
-        mostrarModalEliminar = true;
+        mascotaADarDeBaja = mascota;
+        mostrarModalBaja = true;
     }
 
-    private void CancelarEliminacion()
+    private void CancelarBaja()
     {
-        if (eliminando) return;
-        mostrarModalEliminar = false;
-        mascotaAEliminar = null;
+        if (procesandoBaja) return;
+        mostrarModalBaja = false;
+        mascotaADarDeBaja = null;
     }
 
-    private async Task ConfirmarEliminacion()
+    private async Task ConfirmarBaja()
     {
-        if (mascotaAEliminar == null || eliminando) return;
+        if (mascotaADarDeBaja == null || procesandoBaja) return;
 
-        eliminando = true;
-        int id = mascotaAEliminar.MascotaId;
+        procesandoBaja = true;
+        int id = mascotaADarDeBaja.MascotaId;
 
         try
         {
             bool exito = await MascotaService.EliminarMascotaAsync(id);
             if (exito)
             {
-                listaMascotas?.RemoveAll(m => m.MascotaId == id);
+                mascotaADarDeBaja.Activo = false;
             }
             else if (idClienteLogueado > 0)
             {
@@ -296,9 +344,9 @@
         }
         finally
         {
-            eliminando = false;
-            mostrarModalEliminar = false;
-            mascotaAEliminar = null;
+            procesandoBaja = false;
+            mostrarModalBaja = false;
+            mascotaADarDeBaja = null;
         }
     }
 

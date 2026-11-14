@@ -69,10 +69,8 @@ namespace Mimados.WebApp.Services.Implementations;
             var jsonString = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            // Deserializamos usando una clase DTO interna para atrapar el JSON anidado
             var dataJava = JsonSerializer.Deserialize<List<MascotaJavaResponse>>(jsonString, options);
 
-            // Traducimos al modelo plano que usa tu UI de Blazor
             return dataJava?.Select(d => new Mascota
             {
                 MascotaId = d.Id,
@@ -99,7 +97,6 @@ namespace Mimados.WebApp.Services.Implementations;
     {
         try
         {
-            // Ensamblamos el JSON anidado exacto que espera GlassFish
             var payload = new
             {
                 nombre = mascota.Nombre,
@@ -173,8 +170,6 @@ namespace Mimados.WebApp.Services.Implementations;
     {
         try
         {
-            // Ajusta la URL si tu endpoint base es diferente
-            
             var url = $"{PATH}/historial/{mascotaId}";
 
             var historial = await _httpClient.GetFromJsonAsync<List<RegistroMedico>>(url);
@@ -183,7 +178,7 @@ namespace Mimados.WebApp.Services.Implementations;
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener el historial médico de la mascota {Id}", mascotaId);
-            return new List<RegistroMedico>(); // Retorna lista vacía en caso de error
+            return new List<RegistroMedico>();
         }
     }
 
