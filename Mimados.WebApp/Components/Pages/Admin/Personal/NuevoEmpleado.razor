@@ -1,8 +1,10 @@
 ﻿@page "/empleados/nuevo"
+@rendermode InteractiveServer
 @using Mimados.WebApp.Models
 @using Mimados.WebApp.Services
 @inject NavigationManager Navigation
 @inject IEmpleadoService EmpleadoService
+@inject ISedeService SedeService
 
 <div class="mb-4">
     <h3 class="m-0 text-dark fw-bold">Registrar Empleado</h3>
@@ -61,17 +63,22 @@
                     <label class="form-label fw-bold">Código CMP (Si es veterinario)</label>
                     <input type="text" class="form-control" placeholder="Ej: CMP-10293" @bind="empleado.CodigoCmvp" />
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="mb-3">
                     <label class="form-label fw-bold">Sede Asignada</label>
                     <select class="form-select" @bind="empleado.SedeId">
-                        <option value="1">Sede Central</option>
-                        <option value="2">Sede Norte</option>
+                        <option value="0">Seleccione una sede...</option>
+                        @if (listaSedes != null)
+                        {
+                            @foreach (var sede in listaSedes)
+                            {
+                                <option value="@sede.Id">@sede.Nombre</option>
+                            }
+                        }
                     </select>
                 </div>
             </div>
 
             <div class="row">
-                <!-- Se añadió este campo porque la base de datos requiere contraseña para el Login -->
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Contraseña de Acceso</label>
                     <input type="password" class="form-control" placeholder="Contraseña" @bind="empleado.Password" />
@@ -88,30 +95,34 @@
 </div>
 
 @code {
-    private EmpleadoRequest empleado = new EmpleadoRequest { SedeId = 1, Activo = true };
+    private Empleado empleado = new Empleado { SedeId = 1, Activo = true };
     private string rolSeleccionado = "Veterinario";
     private string? mensajeAlerta;
     private bool cargando = false;
 
     private async Task GuardarEmpleado()
     {
+        if (string.IsNullOrWhiteSpace(empleado.Dni) || string.IsNullOrWhiteSpace(empleado.Nombres) || string.IsNullOrWhiteSpace(empleado.Email))
+        {
+            mensajeAlerta = "Por favor completa los campos obligatorios (DNI, Nombres, Correo).";
+            return;
+        }
+
         cargando = true;
         mensajeAlerta = null;
-
-        // Mapear el rol seleccionado al booleano
         empleado.EsAdmin = (rolSeleccionado == "Administrador");
 
         try
         {
-            var respuesta = await EmpleadoService.RegistrarEmpleadoAsync(empleado);
+            bool exito = await EmpleadoService.RegistrarEmpleadoAsync(empleado);
 
-            if (respuesta != null && respuesta.Success)
+            if (exito)
             {
                 Navigation.NavigateTo("/empleados");
             }
             else
             {
-                mensajeAlerta = respuesta?.Message ?? "No se pudo registrar el empleado. Verifica los datos.";
+                mensajeAlerta = "No se pudo registrar el empleado. Verifica los datos o si el DNI/correo ya existen.";
             }
         }
         catch (Exception)
@@ -122,6 +133,13 @@
         {
             cargando = false;
         }
+    }
+
+    private List<Sede>? listaSedes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaSedes = await SedeService.ObtenerSedesAsync();
     }
 
     private void Volver()
