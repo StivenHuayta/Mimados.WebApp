@@ -1,0 +1,31 @@
+@page "/"
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            if (user.IsInRole("Admin") || user.IsInRole("Administrador"))
+            {
+                Nav.NavigateTo("/admin/inicio");
+            }
+            else if (user.IsInRole("Veterinario") || user.IsInRole("Empleado"))
+            {
+                Nav.NavigateTo("/empleado/citas");
+            }
+            else
+            {
+                Nav.NavigateTo("/cliente/inicio");
+            }
+        }
+        else
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+}

@@ -1,0 +1,148 @@
+@page "/login"
+@page "/cliente/login"
+@attribute [AllowAnonymous]
+@layout Layout.LoginLayout
+
+<PageTitle>Iniciar Sesión - Mimados Vet</PageTitle>
+
+<div class="login-container">
+    <div class="card shadow-lg border-0">
+        <div class="card-body p-4 p-sm-5">
+            <div class="text-center mb-4">
+                <img src="images/logo-mimados.png" alt="Mimados Veterinaria y Petshop" class="img-fluid mb-2" style="max-height: 115px; width: auto;" />
+                <p class="text-muted small mb-0">Sistema de Gestión Veterinaria y Citas</p>
+            </div>
+
+            <!-- Formulario HTML estándar que realiza POST al Minimal API /auth/login -->
+            <form method="post" action="/auth/login" id="loginForm" @formname="loginForm">
+                <AntiforgeryToken />
+
+                <div class="mb-3">
+                    <label for="usuario" class="form-label text-secondary fw-semibold small">Correo Electrónico / Usuario</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-person text-muted"></i>
+                        </span>
+                        <input type="text"
+                               id="usuario"
+                               name="usuario"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="ej: cliente@mimados.pe o admin@mimados.pe"
+                               required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="contrasena" class="form-label text-secondary fw-semibold small mb-0">Contraseña</label>
+                        <a href="#" class="small text-decoration-none text-primary" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">¿Olvidó su contraseña?</a>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-lock text-muted"></i>
+                        </span>
+                        <input type="password"
+                               id="contrasena"
+                               name="contrasena"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="Ingrese su contraseña"
+                               required />
+                    </div>
+                </div>
+
+                <!-- Opciones para ingresar como Cliente, Administrador o Veterinario -->
+                <div class="mb-3">
+                    <label for="rol" class="form-label text-secondary fw-semibold small">Ingresar como:</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-person-badge text-muted"></i>
+                        </span>
+                        <select id="rol" name="rol" class="form-select border-start-0 ps-0">
+                            <option value="Cliente">Cliente</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Veterinario">Personal Veterinario</option>
+                        </select>
+                    </div>
+                </div>
+
+                @if (Registered == "1")
+                {
+                    <div class="alert alert-success p-2 small mb-3 text-center" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        ¡Cuenta creada con éxito! Ya puedes iniciar sesión con tus credenciales.
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Error))
+                {
+                    <div class="alert alert-danger p-2 small mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        @(Error == "1" ? "Usuario o contraseña incorrectos, o cuenta inactiva." : Uri.UnescapeDataString(Error))
+                    </div>
+                }
+
+                <div class="form-check mb-4">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input" />
+                    <label for="rememberMe" class="form-check-label text-muted small">
+                        Mantener sesión iniciada
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm">
+                    <span>Ingresar</span>
+                    <i class="bi bi-box-arrow-in-right ms-1"></i>
+                </button>
+            </form>
+
+            <!-- Opción para crear nueva cuenta de cliente si no tienes una -->
+            <div class="text-center mt-3 pt-3 border-top">
+                <span class="text-muted small">¿No tienes una cuenta? </span>
+                <a href="/registro" class="small fw-semibold text-primary text-decoration-none">
+                    <i class="bi bi-person-plus me-1"></i>Crear cuenta de cliente
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ¿Olvidó su contraseña? -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 p-2">
+            <div class="modal-header border-0 pb-1">
+                <h5 class="modal-title fw-bold text-dark" id="forgotPasswordModalLabel">¿Olvidó su contraseña?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3 text-primary" style="font-size: 2.25rem; line-height: 1;">
+                    <i class="bi bi-envelope-at"></i>
+                </div>
+                <p class="text-muted mb-4">
+                    Para recuperar o restablecer tu contraseña, por favor contáctanos al siguiente correo:
+                </p>
+                <a href="mailto:areadti@mimados.pe" class="btn btn-primary rounded-pill w-100 py-2 fw-semibold">
+                    areadti@mimados.pe
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fillCredentials(email, pass, role) {
+        var userField = document.getElementById('usuario');
+        var passField = document.getElementById('contrasena');
+        var roleField = document.getElementById('rol');
+        if (userField) userField.value = email;
+        if (passField) passField.value = pass;
+        if (roleField && role) roleField.value = role;
+    }
+</script>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    public string? Registered { get; set; }
+}

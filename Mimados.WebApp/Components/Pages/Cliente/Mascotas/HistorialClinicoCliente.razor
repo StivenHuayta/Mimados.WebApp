@@ -1,0 +1,113 @@
+﻿@page "/cliente/mascotas/{Id:int}/historial"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+
+@using Mimados.WebApp.Models
+
+@* INICIO CAMBIOS: Inyectar el servicio de mascotas *@
+@inject IMascotaService MascotaService
+
+
+<div class="container mt-4" style="max-width: 900px;">
+    
+    @* Cabecera con título dinámico y botones de acción *@
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Historial Clínico: <span class="text-primary">@nombreMascota</span></h2>
+        <div>
+            <button class="btn btn-secondary me-2" @onclick="Volver">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-primary" @onclick="ImprimirReporte">
+                <i class="bi bi-file-earmark-pdf"></i> Descargar Reporte
+            </button>
+        </div>
+    </div>
+
+    @* Mensaje de éxito simulado al descargar *@
+    @if (mostrarAlertaDescarga)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            El reporte en PDF se ha generado y descargado exitosamente.
+            <button type="button" class="btn-close" @onclick="() => mostrarAlertaDescarga = false"></button>
+        </div>
+    }
+
+    @if (historial == null)
+    {
+        <div class="alert alert-info shadow-sm">Cargando historial médico...</div>
+    }
+    else if (!historial.Any())
+    {
+        <div class="alert alert-warning shadow-sm">Aún no hay registros médicos para esta mascota.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Veterinario</th>
+                                <th>Servicio</th>
+                                <th>Diagnóstico / Notas</th>
+                                <th>Peso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var registro in historial)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@registro.Fecha</td>
+                                    <td>@registro.Veterinario</td>
+                                    <td><span class="badge badge-mimados-primary">@registro.Servicio</span></td>
+                                    <td>@registro.Notas</td>
+                                    <td>@registro.Peso kg</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private string nombreMascota = "";
+    private bool mostrarAlertaDescarga = false;
+
+
+    private List<RegistroMedico>? historial = null ; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Buscamos la mascota para sacar su nombre real
+        var mascota = await MascotaService.ObtenerMascotaPorIdAsync(Id);
+        nombreMascota = mascota?.Nombre ?? "Mascota Desconocida";
+
+        // 2. Traemos el historial real desde el backend
+        historial = await MascotaService.ObtenerHistorialAsync(Id);
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/cliente/mascotas");
+    }
+
+    private void ImprimirReporte()
+    {
+        // Generación del reporte exigido por el RF-14
+        mostrarAlertaDescarga = true;
+
+        string urlPdf = MascotaService.ObtenerUrlPdfHistorial(Id);
+        Nav.NavigateTo(urlPdf, forceLoad: true);
+    }
+
+    
+    
+}

@@ -1,0 +1,187 @@
+﻿@page "/servicio/administrar/editar/{Id:int}"
+
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Nav
+@inject IServicioService ServicioService
+
+
+<div class="container-fluid mt-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Editar Servicio</h2>
+        <button class="btn btn-secondary" @onclick="Volver">
+            <i class="bi bi-arrow-left"></i> Volver a Administrar Servicios
+        </button>
+    </div>
+
+    @if (nuevoServicio == null)
+    {
+        <div class="alert alert-info">Cargando datos de la mascota...</div>
+    }
+    else
+    {
+        <div class="card p-4 shadow-sm border-0 bg-white">
+            
+            @* Reutilizamos el EditForm con validación nativa (Diapositiva 39) *@
+            <EditForm Model="@nuevoServicio" OnValidSubmit="ActualizarServicio">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                <label class="form-label fw-bold">Nombre del servicio:</label>
+                <InputText @bind-Value="nuevoServicio.Nombre" class="form-control" placeholder="Ej. Servicio ..." />
+                <ValidationMessage For="@(() => nuevoServicio.Nombre)" class="text-danger small" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Descripcion:</label>
+                    <InputText @bind-Value="nuevoServicio.Descripcion" class="form-control" placeholder="Ej. Deteccion ..." />
+                    <ValidationMessage For="@(() => nuevoServicio.Descripcion)" class="text-danger small" />
+            </div>
+
+
+
+                
+
+                <div class="row">
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Precio referencial:</label>
+                    <InputNumber @bind-Value="nuevoServicio.PrecioReferencial" class="form-control" step="0.01"  />
+                    <ValidationMessage For="@(() => nuevoServicio.PrecioReferencial)" class="text-danger small" />
+
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Duracion en minutos:</label>
+                    <InputNumber @bind-Value="nuevoServicio.DuracionMinutos" class="form-control" step="1"  />
+                    <ValidationMessage For="@(() => nuevoServicio.DuracionMinutos)" class="text-danger small" />
+                </div>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+
+                <InputCheckbox id="estadoActivo" @bind-Value="nuevoServicio.Activo" class="form-check-input switch-activo-rojo" role="switch" />
+                <label class="form-check-label" for="estadoActivo">
+                    @(nuevoServicio.Activo ? "Activo" : "Inactivo")
+                   </label>
+            </div>
+
+
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        <i class="bi bi-pencil-square"></i> Actualizar Datos
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private ServicioEditar nuevoServicio = new ServicioEditar ();
+
+    private bool cargando = false;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // 1. Consultamos la sede existente usando el método que creaste
+            var servicioBD = await ServicioService.ObtenerServicioPorIdAsync(Id);
+
+            if (servicioBD != null)
+            {
+                // 2. Pasamos los datos de la base de datos al modelo del formulario
+                nuevoServicio = new ServicioEditar
+                {
+                    Nombre = servicioBD.Nombre,
+                    Descripcion = servicioBD.Descripcion,
+                    PrecioReferencial = (decimal)servicioBD.PrecioReferencial,
+                    DuracionMinutos = servicioBD.DuracionMinutos,
+                    Activo = servicioBD.Activo
+                };
+            }
+            else
+            {
+                mensajeError = "No se encontró el servicio solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeError = "No se pudo cargar la información del servicio.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task ActualizarServicio()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            Servicio servicio = new Servicio();
+            servicio.Id = Id;
+            servicio.Nombre = nuevoServicio.Nombre;
+            servicio.Descripcion = nuevoServicio.Descripcion;
+            servicio.PrecioReferencial = (double)nuevoServicio.PrecioReferencial;
+            servicio.DuracionMinutos = nuevoServicio.DuracionMinutos;
+            servicio.Activo = nuevoServicio.Activo;
+
+            await ServicioService.ActualizarServicioAsync(servicio);
+
+
+            // Si todo sale bien y no lanza excepción, redirige a la lista de administración
+            Nav.NavigateTo("/servicio/administrar");
+        }
+        catch (Exception ex)
+        {
+            // Atrapa cualquier error (incluyendo el mensaje que mande el ApiResponse del backend)
+            mensajeError = ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/servicio/administrar");
+
+    }
+    private void ActualizarMascota()
+    {
+        // Aquí usarías HttpClient (PUT) para actualizar en BD
+        
+        // Regresamos a la grilla principal
+        Nav.NavigateTo("/servicio/administrar");
+    }
+
+    public class ServicioEditar
+{
+    [Required(ErrorMessage = "El nombre del servicio es obligatorio")]
+    public string Nombre { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "La descripción es obligatoria")]
+    public string Descripcion { get; set; } = string.Empty;
+
+    [Range(0.00, 9999.99, ErrorMessage = "Ingrese un precio referencial válido")]
+    public decimal PrecioReferencial { get; set; }
+
+    [Range(1, 1440, ErrorMessage = "Ingrese una duración válida en minutos")]
+    public int DuracionMinutos { get; set; }
+
+    public bool Activo { get; set; } = true;
+
+}
+}

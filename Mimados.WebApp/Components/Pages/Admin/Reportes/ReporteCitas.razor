@@ -1,0 +1,88 @@
+@page "/reportes/citas"
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="m-0 text-dark fw-bold">Reporte de Citas</h3>
+</div>
+
+<!-- Filtros del Reporte -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title m-0 fw-bold text-primary"><i class="bi bi-funnel me-2"></i>Filtros de Búsqueda</h5>
+    </div>
+    <div class="card-body bg-white">
+        <form class="row align-items-end g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Fecha Inicio</label>
+                <input type="date" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Fecha Fin</label>
+                <input type="date" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Estado de Cita</label>
+                <select class="form-select">
+                    <option value="">-- Todos los estados --</option>
+                    <option value="Programada">Programada</option>
+                    <option value="Completada">Completada</option>
+                    <option value="Cancelada">Cancelada</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100 fw-bold">Generar Reporte</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resultados del Reporte -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title m-0 fw-bold">Listado de Citas Encontradas</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID Cita</th>
+                        <th>Fecha y Hora</th>
+                        <th>Sede</th>
+                        <th>Mascota</th>
+                        <th>Veterinario</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (citas.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No se encontraron citas con los filtros seleccionados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var c in citas)
+                        {
+                            <tr>
+                                <td>@c.Id</td>
+                                <td>@c.FechaHora</td>
+                                <td>@c.Sede</td>
+                                <td>@c.Mascota</td>
+                                <td>@c.Veterinario</td>
+                                <td>@c.Motivo</td>
+                                <td><span class="badge @c.EstadoClase">@c.Estado</span></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private record CitaReporteItem(string Id, string FechaHora, string Sede, string Mascota, string Veterinario, string Motivo, string Estado, string EstadoClase);
+    private List<CitaReporteItem> citas = new();
+}

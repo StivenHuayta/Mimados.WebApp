@@ -1,0 +1,135 @@
+@page "/empleado/citas/nueva"
+@page "/empleado/citas/editar/{Id:int}"
+@rendermode InteractiveServer
+
+<PageTitle>Formulario de Cita - Personal - Mimados</PageTitle>
+
+<div class="container mt-4" style="max-width: 920px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="mb-1">@(EsEdicion ? $"Modificar Cita {Codigo}" : "Registrar Nueva Cita")</h2>
+            <p class="text-muted mb-0">@(EsEdicion ? "Actualiza los datos de la cita seleccionada." : "Completa la información de la cita.")</p>
+        </div>
+        <a class="btn btn-secondary" href="/empleado/citas"><i class="bi bi-arrow-left me-1"></i> Volver al listado</a>
+    </div>
+
+    @if (CitaNoEncontrada)
+    {
+        <div class="alert alert-warning" role="alert">No se encontró la cita solicitada.</div>
+    }
+    else
+    {
+        <div class="card p-4 shadow-sm border-0 bg-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi @(EsEdicion ? "bi-pencil-square" : "bi-calendar2-plus") text-primary me-2"></i>
+                    @(EsEdicion ? "Datos de la cita" : "Datos de la nueva cita")
+                </h5>
+                @if (EsEdicion)
+                {
+                    <span class="badge @(estado == "Confirmada" ? "badge-mimados-solid" : estado == "Pendiente" ? "badge-mimados-primary" : "badge-mimados-neutral")">@estado</span>
+                }
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-cliente">Cliente:</label>
+                    <select class="form-select" id="emp-form-cliente" @bind="cliente">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-mascota">Mascota:</label>
+                    <select class="form-select" id="emp-form-mascota" @bind="mascota">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-sede">Sede:</label>
+                    <select class="form-select" id="emp-form-sede" @bind="sede">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-servicio">Servicio:</label>
+                    <select class="form-select" id="emp-form-servicio" @bind="servicio">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-medico">Veterinario:</label>
+                    <select class="form-select" id="emp-form-medico" @bind="veterinario">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-estado">Estado:</label>
+                    <select class="form-select" id="emp-form-estado" @bind="estado">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Confirmada">Confirmada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-fecha">Fecha de la cita:</label>
+                    <input type="date" class="form-control" id="emp-form-fecha" @bind="fecha" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-hora">Hora:</label>
+                    <input type="time" class="form-control" id="emp-form-hora" @bind="hora" />
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-notas">Observaciones (opcional):</label>
+                    <textarea class="form-control" id="emp-form-notas" rows="3" placeholder="Información complementaria" @bind="observaciones"></textarea>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <a href="/empleado/citas" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="button" class="btn btn-primary fw-bold px-4" @onclick="GuardarCita">
+                    <i class="bi bi-save me-1"></i> @(EsEdicion ? "Guardar Cambios" : "Registrar Cita")
+                </button>
+            </div>
+            @if (citaGuardada)
+            {
+                <div class="alert alert-success mt-3 mb-0" role="status">
+                    @(EsEdicion ? "Cita actualizada correctamente." : "Cita registrada correctamente.")
+                    <a class="alert-link" href="/empleado/citas">Ver el listado</a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private bool EsEdicion => Id.HasValue;
+    private bool CitaNoEncontrada => false;
+    private string Codigo => $"C-{Id.GetValueOrDefault():000}";
+    private bool citaGuardada;
+
+    private string cliente = "";
+    private string mascota = "";
+    private string sede = "";
+    private string servicio = "";
+    private string veterinario = "";
+    private string estado = "Pendiente";
+    private DateTime? fecha;
+    private TimeOnly? hora;
+    private string observaciones = "";
+
+    protected override void OnParametersSet()
+    {
+        citaGuardada = false;
+        cliente = "";
+        mascota = "";
+        sede = "";
+        servicio = "";
+        veterinario = "";
+        estado = "Pendiente";
+        fecha = null;
+        hora = null;
+        observaciones = "";
+    }
+
+    private void GuardarCita() => citaGuardada = true;
+}

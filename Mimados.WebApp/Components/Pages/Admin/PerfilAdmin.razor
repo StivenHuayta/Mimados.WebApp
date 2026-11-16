@@ -1,0 +1,50 @@
+@page "/admin/perfil"
+@rendermode InteractiveServer
+
+<AuthorizeView Roles="Admin, Administrador">
+    <Authorized>
+        <div class="mb-4">
+            <h3 class="m-0 text-dark fw-bold">Mi Perfil (Administrador)</h3>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        Datos de la Cuenta
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">DNI</label>
+                                <input type="text" class="form-control bg-light" value="@(context.User.FindFirst("Dni")?.Value ?? "")" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nombres y Apellidos</label>
+                                <input type="text" class="form-control" value="@(context.User.FindFirst("DisplayName")?.Value ?? "")" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Correo Electrónico</label>
+                                <input type="email" class="form-control" value="@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? context.User.Identity?.Name ?? "")" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Rol</label>
+                                <input type="text" class="form-control bg-light" value="@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Administrador")" disabled />
+                            </div>
+                            <button type="button" class="btn btn-primary fw-bold w-100">Actualizar Datos</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="alert alert-warning shadow-sm my-4">
+            No posees permisos para ver esto. Por favor, contacta al soporte.
+        </div>
+        <a href="/login" class="btn btn-outline-primary">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Ir al Login
+        </a>
+    </NotAuthorized>
+</AuthorizeView>

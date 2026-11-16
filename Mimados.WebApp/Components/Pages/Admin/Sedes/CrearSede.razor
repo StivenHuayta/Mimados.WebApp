@@ -1,0 +1,124 @@
+﻿@page "/sede/crear"
+
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@using System.ComponentModel.DataAnnotations
+@inject ISedeService SedeService
+
+
+<div class="container-fluid mt-4">
+    
+    @* Cabecera con botón para retroceder *@
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Registrar Nueva Sede</h2>
+        <button class="btn btn-secondary" @onclick="Volver">
+            <i class="bi bi-arrow-left"></i> Volver 
+        </button>
+    </div>
+
+    <div class="card p-4 shadow-sm border-0 bg-white">
+        <EditForm Model="@nuevaSede" OnValidSubmit="GuardarSede">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nombre de la Sede:</label>
+                <InputText @bind-Value="nuevaSede.Nombre" class="form-control" placeholder="Ej. Sede ..." />
+                <ValidationMessage For="@(() => nuevaSede.Nombre)" class="text-danger small" />
+            </div>
+
+            <div class="row">
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Direccion:</label>
+                    <InputText @bind-Value="nuevaSede.Direccion" class="form-control" placeholder="Ej. Av. ..." />
+                    <ValidationMessage For="@(() => nuevaSede.Direccion)" class="text-danger small" />
+
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Telefono:</label>
+                    <InputText @bind-Value="nuevaSede.Telefono" class="form-control" placeholder="Ej. 999 999 999" />
+                    <ValidationMessage For="@(() => nuevaSede.Telefono)" class="text-danger small" />
+                </div>
+            </div>
+
+            
+
+            
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary px-4 fw-bold" >
+                    <i class="bi bi-save"></i> Guardar Sede
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+@code {
+    // Inicializamos con la fecha de hoy por defecto
+    private SedeRegistroModel nuevaSede = new SedeRegistroModel ();
+
+    private bool cargando = false;
+    private string? mensajeError;
+/*
+     *  private void GuardarSede()
+    {
+        // Aquí simulamos que se guarda en la Base de Datos.
+        // Más adelante, aquí usarás HttpClient para hacer el POST al servidor.
+
+        // Redirigimos al usuario de regreso a su grilla usando NavigationManager[cite: 5]
+        Nav.NavigateTo("/sede/administrar");
+        }
+*/
+
+    private async Task GuardarSede()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            Sede se = new Sede();
+            se.Nombre = nuevaSede.Nombre;
+            se.Direccion = nuevaSede.Direccion;
+            se.Telefono = nuevaSede.Telefono;
+            bool exito = await SedeService.CrearSedeAsync(se);
+
+            if (exito)
+            {
+                // Si se registró con éxito, redirigimos al usuario a la lista de sedes
+                Nav.NavigateTo("/sede/administrar");
+            }
+            else
+            {
+                mensajeError = "No se pudo registrar la sede. Verifica los datos.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeError = "No se pudo registrar la sede. Inténtalo nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/sede/administrar");
+    }
+
+    // Modelo de datos exclusivo para crear mascotas
+    public class SedeRegistroModel
+{
+    [Required(ErrorMessage = "El nombre de la sede es obligatorio")]
+    public string Nombre { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "La dirección es obligatoria")]
+    public string Direccion { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El teléfono es obligatorio")]
+    public string Telefono { get; set; } = string.Empty;
+
+}
+}
