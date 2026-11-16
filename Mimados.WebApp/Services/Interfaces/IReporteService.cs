@@ -6,5 +6,6 @@ namespace Mimados.WebApp.Services
     public interface IReporteService
     {
         Task<List<ReporteServiciosDTO?>> ObtenerReporteServiciosPorFechas(DateOnly? fechaInicio, DateOnly? fechaFin);
+        string ObtenerUrlPdfReporteServivios(DateOnly? fechaInicio, DateOnly? fechaFin);
     }
 }

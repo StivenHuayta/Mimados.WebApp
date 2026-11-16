@@ -21,5 +21,12 @@ namespace Mimados.WebApp.Services
 
             return response.Data;
         }
+        
+        public string ObtenerUrlPdfReporteServivios(DateOnly? fechaInicio, DateOnly? fechaFin)
+        {
+            //return $"ReporteRS/generarPdf?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}"; 
+            return new Uri(_http.BaseAddress!, $"ReporteRS/descargarServicioReporte?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}").ToString();
+        }
+
     }
 }
