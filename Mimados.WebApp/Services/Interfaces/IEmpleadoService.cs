@@ -1,10 +1,10 @@
 using Mimados.WebApp.Models;
 
-namespace Mimados.WebApp.Services.Interfaces;
+namespace Mimados.WebApp.Services;
 
 public interface IEmpleadoService
 {
-    Task<ApiResponse<object>?> RegistrarEmpleadoAsync(EmpleadoRequest request);
-    Task<ApiResponse<object>?> ModificarEmpleadoAsync(EmpleadoRequest request);
-    Task<ApiResponse<List<EmpleadoRequest>>?> ListarEmpleadosAsync();
-}
+    Task<List<Empleado>> ListarEmpleadosAsync();
+    Task<bool> RegistrarEmpleadoAsync(Empleado empleado);
+    Task<bool> ModificarEmpleadoAsync(Empleado empleado);
+}   

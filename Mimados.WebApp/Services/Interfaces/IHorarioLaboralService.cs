@@ -1,10 +1,11 @@
 using Mimados.WebApp.Models;
 
-namespace Mimados.WebApp.Services.Interfaces;
+namespace Mimados.WebApp.Services;
 
 public interface IHorarioLaboralService
 {
-    Task<ApiResponse<object>?> RegistrarHorarioAsync(HorarioRequest request);
-    Task<ApiResponse<List<HorarioRequest>>?> ListarPorEmpleadoAsync(int idEmpleado);
-    Task<ApiResponse<object>?> EliminarHorarioAsync(int idHorario);
+    Task<List<HorarioLaboral>> ListarPorEmpleadoAsync(int empleadoId);
+    Task<bool> RegistrarHorarioAsync(HorarioLaboral horario);
+    Task<bool> ModificarHorarioAsync(HorarioLaboral horario);
+    Task<bool> EliminarHorarioAsync(int horarioId);
 }
