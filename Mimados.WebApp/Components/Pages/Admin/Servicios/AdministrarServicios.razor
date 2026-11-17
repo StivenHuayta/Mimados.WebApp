@@ -2,6 +2,7 @@
 @using Mimados.WebApp.Models
 @inject NavigationManager Nav
 @inject IServicioService ServicioService
+@rendermode InteractiveServer
 
 
 <div class="container mt-4 mb-5">
@@ -60,7 +61,13 @@
                 </div>
             </div>
     </div>
-
+    @if (errorFiltros)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="CerrarMensajeError"></button>
+        </div>
+    }
     <!-- Tabla paginada de clientes. (tipo de dato a usar, ,onchanged) -->
     <Card Title="Lista de Servicios"
           FooterClass="text-secondary small"
@@ -154,7 +161,8 @@
 
 
     private bool cargando = true;
-    private string mensajeError = "";
+    private string mensajeError = string.Empty;
+    private bool errorFiltros = false;
 
     List<Servicio> listaServicios = new List<Servicio>();
 
@@ -162,32 +170,82 @@
     {
         await CargarDatos();
     }
+    private void CerrarMensajeError()
+    {
 
+        mensajeError = string.Empty;
+        errorFiltros = false;
+    }
 
     private async Task CargarDatos()
     {
         cargando = true;
-        mensajeError = null;
+        mensajeError = string.Empty;
 
         try
         {
-            listaServicios = await ServicioService.ObtenerServiciosAsync();
+            listaServicios = await ServicioService.ObtenerServiciosAsync(filtroNombre, filtroPrecioMin, filtroPrecioMax, filtroDuracionMin, filtroDuracionMax);
         }
         catch (Exception)
         {
+            Console.WriteLine("Error al cargar los servicios: " );
             mensajeError = "No se pudieron cargar los servicios. Inténtalo nuevamente.";
+            Console.Error.WriteLine("Error al cargar los servicios: " + mensajeError);
         }
         finally
         {
             cargando = false;
         }
     }
-    private void AplicarFiltros(){
+    private bool ValidarFiltros(){
+        mensajeError = string.Empty;
 
 
+        if (filtroPrecioMin < 0 || filtroPrecioMax < 0)
+        {
+            mensajeError = "Los valores del rango de precio no pueden ser negativos.";
+
+            return false;
+        }
+
+        if (filtroDuracionMin < 0 || filtroDuracionMax < 0)
+        {
+            mensajeError = "Los valores del rango de duración no pueden ser negativos.";
+            return false;
+        }
+
+        if (filtroPrecioMax > 0 && filtroPrecioMax < filtroPrecioMin)
+        {
+            mensajeError = "El precio máximo no puede ser menor que el precio mínimo.";
+            return false;
+        }
+
+        if (filtroDuracionMax > 0 && filtroDuracionMax < filtroDuracionMin)
+        {
+            mensajeError = "La duración máxima no puede ser menor que la duración mínima.";
+            return false;
+        }
+
+        return true;
+    }
+    private async Task AplicarFiltros(){
+        if (!ValidarFiltros())
+        {
+            errorFiltros = true;
+            return;
+        }
+        
+        errorFiltros = false;
+        await CargarDatos();
     }
     private void LimpiarFiltros(){
-        
+        filtroNombre = "";
+        filtroPrecioMin = 0;
+        filtroPrecioMax = 0;
+        filtroDuracionMin = 0;
+        filtroDuracionMax = 0;
+        mensajeError = string.Empty;
+        errorFiltros = false;
 
     }
 
