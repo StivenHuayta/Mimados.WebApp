@@ -43,6 +43,19 @@ public class SedeService : ISedeService
             return new List<Sede>();
         }
     }
+    public async Task<List<Sede>> ObtenerSedesConParamatrosAsync(string nombre, string direccion)
+    {
+        try
+        {
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Sede>>>($"{PATH}/listarSede?nombre={nombre}&direccion={direccion}");
+            return respuesta?.Data ?? new List<Sede>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar sedes con parámetros");
+            return new List<Sede>();
+        }
+    }
 
     public async Task<bool> CrearSedeAsync(Sede sede)
     {

@@ -238,7 +238,7 @@
         errorFiltros = false;
         await CargarDatos();
     }
-    private void LimpiarFiltros(){
+    private async Task LimpiarFiltros(){
         filtroNombre = "";
         filtroPrecioMin = 0;
         filtroPrecioMax = 0;
@@ -246,6 +246,7 @@
         filtroDuracionMax = 0;
         mensajeError = string.Empty;
         errorFiltros = false;
+        await CargarDatos();
 
     }
 
