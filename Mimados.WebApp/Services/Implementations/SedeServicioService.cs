@@ -46,12 +46,12 @@ public class SedeServicioService : ISedeServicioService
         }
     }
 
-    public async Task<List<Servicio>> ObtenerServiciosDisponiblesAsync(int sedeid)
+    public async Task<List<Servicio>> ObtenerServiciosDisponiblesAsync(int sedeid, string textoBusqueda)
     {
         try
         {
             var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>(
-                $"{PATH}/listarServiciosDisponibles/{sedeid}");
+                $"{PATH}/listarServiciosDisponibles/{sedeid}?nombre={textoBusqueda}");
 
             return respuesta?.Data ?? new List<Servicio>();
         }
