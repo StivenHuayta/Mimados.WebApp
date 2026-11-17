@@ -5,6 +5,8 @@
 @using Mimados.WebApp.Services
 
 @inject ICitaService CitaService
+@inject IMascotaService MascotaService
+@inject IVeterinarioService VeterinarioService
 
 <PageTitle>Detalle de Cita - Mimados</PageTitle>
 
@@ -51,16 +53,16 @@
                 <div class="row g-3">
 
                     <div class="col-md-6">
-                        <span class="text-muted">ID de Mascota</span>
+                        <span class="text-muted">Mascota</span>
                         <p class="fw-semibold mb-0">
-                            @cita.MascotaId
+                            @nombreMascota
                         </p>
                     </div>
 
                     <div class="col-md-6">
-                        <span class="text-muted">ID de Empleado</span>
+                        <span class="text-muted">Veterinario asignado</span>
                         <p class="fw-semibold mb-0">
-                            @cita.EmpleadoId
+                            @nombreVeterinario
                         </p>
                     </div>
 
@@ -112,6 +114,8 @@
     public int Id { get; set; }
 
     private Cita? cita;
+    private string nombreMascota = "No disponible";
+    private string nombreVeterinario = "No disponible";
     private bool cargando = true;
     private string mensajeError = "";
 
@@ -120,6 +124,8 @@
         cargando = true;
         mensajeError = "";
         cita = null;
+        nombreMascota = "No disponible";
+        nombreVeterinario = "No disponible";
 
         try
         {
@@ -128,6 +134,30 @@
             if (cita == null)
             {
                 mensajeError = "No se encontró la cita solicitada.";
+                return;
+            }
+
+            // Los ID se conservan internamente, pero se muestran los nombres reales.
+            try
+            {
+                var mascota = await MascotaService.ObtenerMascotaPorIdAsync(cita.MascotaId);
+                nombreMascota = mascota?.Nombre ?? "No disponible";
+            }
+            catch (Exception)
+            {
+                nombreMascota = "No disponible";
+            }
+
+            try
+            {
+                var veterinarios = await VeterinarioService.ListarAsync();
+                nombreVeterinario = veterinarios
+                    .FirstOrDefault(v => v.EmpleadoId == cita.EmpleadoId)?.Nombre
+                    ?? "No disponible";
+            }
+            catch (Exception)
+            {
+                nombreVeterinario = "No disponible";
             }
         }
         catch (Exception)

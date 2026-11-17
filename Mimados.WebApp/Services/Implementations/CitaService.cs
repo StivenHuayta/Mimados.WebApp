@@ -123,4 +123,58 @@ public class CitaService : ICitaService
             throw new Exception("No se pudo conectar con el servidor. Inténtalo nuevamente.");
         }
     }
+
+
+    public async Task<List<CitaListadoEmpleadoDTO>> ListarTodasAsync()
+    {
+        try
+        {
+            var respuesta = await _http.GetFromJsonAsync<
+                ApiResponse<List<CitaListadoEmpleadoDTO>>>(
+                    $"{PATH}/listar");
+
+            if (respuesta?.Success != true)
+            {
+                throw new InvalidOperationException(
+                    respuesta?.Message ?? "No se pudieron obtener las citas.");
+            }
+
+            return respuesta.Data ?? new List<CitaListadoEmpleadoDTO>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar todas las citas");
+            throw;
+        }
+    }
+    public async Task<bool> RegistrarEmpleadoAsync(Cita cita, int sedeId, int sedeServicioId)
+    {
+        try
+        {
+            var datos = new
+            {
+                empleadoId = cita.EmpleadoId,
+                mascotaId = cita.MascotaId,
+                sedeId,
+                sedeServicioId,
+                fechaHoraInicio = cita.FechaHoraInicio.ToString("yyyy-MM-ddTHH:mm:ss"),
+                fechaHoraFin = cita.FechaHoraFin.ToString("yyyy-MM-ddTHH:mm:ss"),
+                motivo = cita.Motivo
+            };
+
+            var response = await _http.PostAsJsonAsync($"{PATH}/registrarEmpleado", datos);
+            var resultado = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+
+            if (!response.IsSuccessStatusCode || resultado?.Success != true)
+                throw new InvalidOperationException(resultado?.Message ?? "No se pudo registrar la cita.");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al registrar cita del empleado para mascota {MascotaId}", cita.MascotaId);
+            throw;
+        }
+    }
+
 }

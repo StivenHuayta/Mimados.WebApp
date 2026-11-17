@@ -1,42 +1,171 @@
 @page "/empleado/citas/detalle/{Id:int}"
 @rendermode InteractiveServer
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services.Interfaces
+@inject ICitaService CitaService
+@inject IVeterinarioService VeterinarioService
 
-<PageTitle>Detalle de Cita del Personal - Mimados</PageTitle>
+<PageTitle>Detalle de Cita - Personal - Mimados</PageTitle>
 
-<div class="container mt-4" style="max-width: 850px;">
+<div class="container mt-4 detalle-cita-empleado" style="max-width: 850px;">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h2 class="mb-0">Consulta de Cita</h2>
-        <a href="/empleado/citas" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al listado</a>
+        <a href="/empleado/citas" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver al listado
+        </a>
     </div>
-    <div class="card shadow-sm border-0 bg-white">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-white">Cita @Codigo</h5>
-            <span class="badge bg-white text-primary">@Estado</span>
-        </div>
-        <div class="card-body p-4">
-            <div class="row g-3">
-                <div class="col-md-6"><span class="text-muted">Cliente</span><p class="fw-semibold mb-0">@Cliente</p></div>
-                <div class="col-md-6"><span class="text-muted">Mascota</span><p class="fw-semibold mb-0">@Mascota</p></div>
-                <div class="col-md-6"><span class="text-muted">Servicio</span><p class="fw-semibold mb-0">@Servicio</p></div>
-                <div class="col-md-6"><span class="text-muted">Sede</span><p class="fw-semibold mb-0">@Sede</p></div>
-                <div class="col-md-6"><span class="text-muted">Fecha y hora</span><p class="fw-semibold mb-0">@FechaHora</p></div>
-                <div class="col-md-6"><span class="text-muted">Veterinario asignado</span><p class="fw-semibold mb-0">@Veterinario</p></div>
+
+    @if (cargando)
+    {
+        <div class="alert alert-info">Cargando información de la cita...</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+    else if (cita == null)
+    {
+        <div class="alert alert-warning">No se encontró la cita solicitada.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-white">Cita @($"C-{Id:D3}")</h5>
+                <span class="badge bg-white text-primary">@EstadoMostrar(cita.Estado)</span>
             </div>
+
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <span class="text-muted">Cliente</span>
+                        <p class="fw-semibold mb-0">@Valor(resumen?.NombreCliente)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Mascota</span>
+                        <p class="fw-semibold mb-0">@Valor(resumen?.NombreMascota, $"ID {cita.MascotaId}")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Servicio</span>
+                        <p class="fw-semibold mb-0">@Valor(resumen?.NombreServicio)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Sede</span>
+                        <p class="fw-semibold mb-0">@Valor(sede)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Veterinario asignado</span>
+                        <p class="fw-semibold mb-0">@Valor(veterinario, $"ID {cita.EmpleadoId}")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Estado</span>
+                        <p class="fw-semibold mb-0">@EstadoMostrar(cita.Estado)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Fecha y hora de inicio</span>
+                        <p class="fw-semibold mb-0">@cita.FechaHoraInicio.ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted">Fecha y hora de fin</span>
+                        <p class="fw-semibold mb-0">@cita.FechaHoraFin.ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted">Motivo de la cita</span>
+                        <p class="fw-semibold mb-0">@Valor(cita.Motivo)</p>
+                    </div>
+                </div>
+            </div>
+
+            @if (cita.Estado is "PROGRAMADA" or "CONFIRMADA")
+            {
+                <div class="card-footer bg-white text-end py-3">
+                    <a class="btn btn-primary fw-bold" href="@($"/empleado/citas/editar/{Id}")">
+                        <i class="bi bi-pencil-square me-1"></i> Modificar Cita
+                    </a>
+                </div>
+            }
         </div>
-        <div class="card-footer bg-white text-end py-3">
-            <a class="btn btn-primary fw-bold" href="@($"/empleado/citas/editar/{Id}")"><i class="bi bi-pencil-square me-1"></i> Modificar Cita</a>
-        </div>
-    </div>
+    }
 </div>
+
+<style>
+    .detalle-cita-empleado .card-body p {
+        color: #212529 !important;
+    }
+</style>
 
 @code {
     [Parameter] public int Id { get; set; }
-    private string Codigo => Id > 0 ? $"C-{Id:D3}" : "-";
-    private string Cliente => "";
-    private string Mascota => "";
-    private string Servicio => "";
-    private string Sede => "";
-    private string FechaHora => "";
-    private string Veterinario => "";
-    private string Estado => "Pendiente";
+
+    private Cita? cita;
+    private CitaListadoEmpleadoDTO? resumen;
+    private string veterinario = "";
+    private string sede = "";
+    private bool cargando = true;
+    private string error = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        error = "";
+        cita = null;
+        resumen = null;
+        veterinario = "";
+        sede = "";
+
+        try
+        {
+            cita = await CitaService.ObtenerPorIdAsync(Id);
+            if (cita == null)
+                return;
+
+            // El DTO del listado aporta nombres del cliente, mascota y servicio.
+            try
+            {
+                var citas = await CitaService.ListarTodasAsync();
+                resumen = citas.FirstOrDefault(x => x.Id == Id);
+            }
+            catch
+            {
+                // Los datos básicos siguen visibles aunque el listado falle.
+            }
+
+            // Veterinario y sede se obtienen del catálogo ya utilizado en el RF-03.
+            try
+            {
+                var veterinarios = await VeterinarioService.ListarAsync();
+                var seleccionado = veterinarios.FirstOrDefault(x => x.EmpleadoId == cita.EmpleadoId);
+                if (seleccionado != null)
+                {
+                    veterinario = seleccionado.Nombre;
+                    sede = seleccionado.Sede;
+                }
+            }
+            catch
+            {
+                // La consulta del detalle no depende del catálogo de veterinarios.
+            }
+        }
+        catch
+        {
+            error = "No se pudo consultar la cita. Verifica la conexión con Java.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private static string Valor(string? valor, string alternativo = "No disponible") =>
+        string.IsNullOrWhiteSpace(valor) ? alternativo : valor;
+
+    private static string EstadoMostrar(string? estado) => estado?.ToUpperInvariant() switch
+    {
+        "PROGRAMADA" => "Pendiente",
+        "CONFIRMADA" => "Confirmada",
+        "CANCELADA" => "Cancelada",
+        "ATENDIDA" => "Atendida",
+        "NO_ASISTIO" => "No asistió",
+        _ => estado ?? "No disponible"
+    };
 }
