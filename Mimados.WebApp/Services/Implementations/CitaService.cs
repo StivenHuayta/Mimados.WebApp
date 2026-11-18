@@ -124,7 +124,6 @@ public class CitaService : ICitaService
         }
     }
 
-
     public async Task<List<CitaListadoEmpleadoDTO>> ListarTodasAsync()
     {
         try
@@ -147,6 +146,7 @@ public class CitaService : ICitaService
             throw;
         }
     }
+
     public async Task<bool> RegistrarEmpleadoAsync(Cita cita, int sedeId, int sedeServicioId)
     {
         try
@@ -177,4 +177,36 @@ public class CitaService : ICitaService
         }
     }
 
+    public async Task<PageResultDto<CitaVeterinarioDto>> ListarPorVeterinarioAsync(
+        int empleadoId, string? searchText, DateTime? fecha, string? estado,
+        int pageNumber, int recordsPerPage)
+    {
+        try
+        {
+            var queryParams = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"recordsPerPage={recordsPerPage}"
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+                queryParams.Add($"searchText={Uri.EscapeDataString(searchText.Trim())}");
+
+            if (fecha.HasValue)
+                queryParams.Add($"fecha={fecha.Value:yyyy-MM-dd}");
+
+            if (!string.IsNullOrWhiteSpace(estado))
+                queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+            var url = $"{PATH}/veterinario/{empleadoId}?{string.Join("&", queryParams)}";
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<PageResultDto<CitaVeterinarioDto>>>(url);
+
+            return respuesta?.Data ?? new PageResultDto<CitaVeterinarioDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar citas del veterinario {EmpleadoId}", empleadoId);
+            return new PageResultDto<CitaVeterinarioDto>();
+        }
+    }
 }
