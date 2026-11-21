@@ -21,133 +21,133 @@
     }
     else
     {
-        <div class="card p-4 shadow-sm border-0 bg-white">
+            <div class="card p-4 shadow-sm border-0 bg-white">
             
-            @* Reutilizamos el EditForm con validación nativa (Diapositiva 39) *@
-            <EditForm Model="@editarSede" OnValidSubmit="ActualizarSede">
-                <DataAnnotationsValidator />
+                @* Reutilizamos el EditForm con validación nativa (Diapositiva 39) *@
+                <EditForm Model="@editarSede" OnValidSubmit="ActualizarSede">
+                    <DataAnnotationsValidator />
 
-                <div class="mb-3">
-                <label class="form-label fw-bold">Nombre de la Sede:</label>
-                <InputText @bind-Value="editarSede.Nombre" class="form-control" placeholder="Ej. Sede ..." />
-                <ValidationMessage For="@(() => editarSede.Nombre)" class="text-danger small" />
-            </div>
+                    <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre de la Sede:</label>
+                    <InputText @bind-Value="editarSede.Nombre" class="form-control" placeholder="Ej. Sede ..." />
+                    <ValidationMessage For="@(() => editarSede.Nombre)" class="text-danger small" />
+                </div>
 
-            <div class="row">
+                <div class="row">
                 
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Direccion:</label>
-                    <InputText @bind-Value="editarSede.Direccion" class="form-control" placeholder="Ej. Av. ..." />
-                    <ValidationMessage For="@(() => editarSede.Direccion)" class="text-danger small" />
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Direccion:</label>
+                        <InputText @bind-Value="editarSede.Direccion" class="form-control" placeholder="Ej. Av. ..." />
+                        <ValidationMessage For="@(() => editarSede.Direccion)" class="text-danger small" />
 
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Telefono:</label>
+                        <InputText @bind-Value="editarSede.Telefono" class="form-control" placeholder="Ej. 999 999 999" />
+                        <ValidationMessage For="@(() => editarSede.Telefono)" class="text-danger small" />
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Telefono:</label>
-                    <InputText @bind-Value="editarSede.Telefono" class="form-control" placeholder="Ej. 999 999 999" />
-                    <ValidationMessage For="@(() => editarSede.Telefono)" class="text-danger small" />
+
+                <div class="form-check form-switch mb-3">
+
+                    <InputCheckbox id="estadoActivo" @bind-Value="editarSede.Activo" class="form-check-input switch-activo-rojo" role="switch" />
+                    <label class="form-check-label" for="estadoActivo">
+                        @(editarSede.Activo ? "Activo" : "Inactivo")
+                       </label>
                 </div>
-            </div>
-
-            <div class="form-check form-switch mb-3">
-
-                <InputCheckbox id="estadoActivo" @bind-Value="editarSede.Activo" class="form-check-input switch-activo-rojo" role="switch" />
-                <label class="form-check-label" for="estadoActivo">
-                    @(editarSede.Activo ? "Activo" : "Inactivo")
-                   </label>
-            </div>
 
 
 
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary px-4 fw-bold">
-                        <i class="bi bi-pencil-square"></i> Actualizar Datos
-                    </button>
-                </div>
-            </EditForm>
-        </div>
-
-
-        <div class="mt-4">
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-secondary m-0">
-        <i class="bi bi-list-check text-primary me-2"></i> Listado de Servicios
-    </h3>
-    <button type="button" class="btn btn-primary" @onclick="AbrirBuscadorServicio">
-    <i class="bi bi-plus-circle me-1"></i> Nuevo Servicio
-</button>
-</div>
-    <Card Title="Lista de Servicios"
-          FooterClass="text-secondary small"
-          BodyClass="p-0">
-        
-
-        <ChildContent>
-        
-
-        @* TODO: a vanilla-JS datatable library (Tabulator/Simple-DataTables) could be
-           initialised against this table to make search, sort and pagination live. *@
-        <table class="table table-hover align-middle mb-0">
-            <thead class="align-middle ">
-                <tr>
-                    <th style="width: 60px">
-                         #
-                    </th>
-                    <th>
-                            Nombre 
-                    </th>
-                    <th>
-                            Descripcion 
-                    </th>
-                    <th>
-                            Precio referencial 
-                    </th>
-                    <th>
-                            Duracion en minutos
-                    </th>
-                    
-                    <th style="width: 130px" class="text-center">Estado</th>
-                    <th style="width: 130px">
-                        
-                            Editar 
-                        
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                            @foreach (var ser in listaServiciosDTO)
-                {
-                    <tr class="align-middle">
-                        <td>@ser.IdServicio</td>
-                        <td>@ser.Nombre</td>
-                        <td>@ser.Descripcion</td>
-                        <td>@ser.PrecioReferencial</td>
-                        <td>@ser.DuracionMinutos</td>
-                        <td class="text-center align-middle">
-                        @if (ser.Activo)
-                            {
-                                
-                                <span class="badge badge-mimados-primary px-2 py-1">Activo</span>
-                               }
-                        else
-                            {
-
-                            <span class="badge badge-mimados-danger px-2 py-1">Inactivo</span>
-                            }
-                    </td>
-                    <td >
-                        <button class="btn btn-outline-danger btn-sm" @onclick="() => EliminarSedeServicio(ser.IdSedeServicio)">
-                             Desactivar
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">
+                            <i class="bi bi-pencil-square"></i> Actualizar Datos
                         </button>
-                    </td>
-                        
-                    </tr>
-                }
-            </tbody>
-        </table>
-        </ChildContent>
-    </Card>
+                    </div>
+                </EditForm>
+            </div>
+
+
+            <div class="mt-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-secondary m-0">
+            <i class="bi bi-list-check text-primary me-2"></i> Listado de Servicios
+        </h3>
+        <button type="button" class="btn btn-primary" @onclick="AbrirBuscadorServicio">
+        <i class="bi bi-plus-circle me-1"></i> Nuevo Servicio
+    </button>
     </div>
+        <Card Title="Lista de Servicios"
+              FooterClass="text-secondary small"
+              BodyClass="p-0">
+        
+
+            <ChildContent>
+        
+
+            @* TODO: a vanilla-JS datatable library (Tabulator/Simple-DataTables) could be
+               initialised against this table to make search, sort and pagination live. *@
+            <table class="table table-hover align-middle mb-0">
+                <thead class="align-middle ">
+                    <tr>
+                        <th style="width: 60px">
+                             #
+                        </th>
+                        <th>
+                                Nombre 
+                        </th>
+                        <th>
+                                Descripcion 
+                        </th>
+                        <th>
+                                Precio referencial 
+                        </th>
+                        <th>
+                                Duracion en minutos
+                        </th>
+                    
+                        <th style="width: 130px" class="text-center">Estado</th>
+                        <th style="width: 130px">
+                        
+                                Acciones 
+                        
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                                @foreach (var ser in listaServiciosDTO)
+                    {
+                        <tr class="align-middle">
+                            <td>@(fila++)</td>
+                            <td>@ser.Nombre</td>
+                            <td>@ser.Descripcion</td>
+                            <td>@ser.PrecioReferencial</td>
+                            <td>@ser.DuracionMinutos</td>
+                            <td class="text-center align-middle">
+                            @if (ser.Activo)
+                                {
+                                
+                                    <span class="badge badge-mimados-primary px-2 py-1">Activo</span>
+                                   }
+                            else
+                                {
+
+                                <span class="badge badge-mimados-danger px-2 py-1">Inactivo</span>
+                                }
+                        </td>
+                        <td >
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => EliminarSedeServicio(ser.IdSedeServicio)">
+                                 Desactivar
+                            </button>
+                        </td>
+                        
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </ChildContent>
+        </Card>
+        </div>
     }
 </div>
 
@@ -230,7 +230,7 @@
     List<SedeServicio> lisAux = new List<SedeServicio>();
     List<SedeServicioDTO> listaServiciosDTO = new List<SedeServicioDTO>();
 
-
+    private int fila = 1;
 
     private SedeEditar editarSede = new SedeEditar ();
 
