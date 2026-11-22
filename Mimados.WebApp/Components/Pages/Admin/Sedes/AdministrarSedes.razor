@@ -100,7 +100,7 @@
                         @foreach (var sed in sedes)
                         {
                             <tr class="align-middle">
-                                <td>@sed.Id</td>
+                                <td>@(fila++)</td>
                                 <td>@sed.Nombre</td>
                                 <td>@sed.Direccion</td>
                                 <td>@sed.Telefono</td>
@@ -139,6 +139,7 @@
     private string filtroDireccion;
     private ISedeService sedeService; 
     private List<Sede> sedes=new List<Sede>();
+    private int fila;
 
     private bool cargando = true;
     private string mensajeError = "";
@@ -152,6 +153,7 @@
     protected override async Task OnInitializedAsync()
     {
         await CargarDatos();
+        
     }
 
     private async Task CargarDatos()
@@ -169,6 +171,7 @@
         }
         finally
         {
+            fila = 1;
             cargando = false;
         }
     }

@@ -118,7 +118,7 @@
                 @foreach (var ser in listaServicios)
                 {
                     <tr class="align-middle">
-                        <td>@ser.Id</td>
+                        <td>@(fila++)</td>
                         <td>@ser.Nombre</td>
                         <td>@ser.Descripcion</td>
                         <td>@ser.PrecioReferencial</td>
@@ -159,6 +159,8 @@
     private int filtroDuracionMin;
     private int filtroDuracionMax;
 
+    private int fila;
+
 
     private bool cargando = true;
     private string mensajeError = string.Empty;
@@ -194,6 +196,7 @@
         }
         finally
         {
+            fila = 1;
             cargando = false;
         }
     }

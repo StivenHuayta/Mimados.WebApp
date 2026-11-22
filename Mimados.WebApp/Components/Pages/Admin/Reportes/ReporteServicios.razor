@@ -65,10 +65,10 @@
                         <tr>
                             <th class="ps-3">#</th>
                             <th>Nombre del Servicio</th>
-                            <th>Total Solicitudes</th>
-                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Precio Ponderado</th>
                             <th>Ingresos Totales</th>
-                            <th>Estado</th>
+                            <th>Nivel de demanda</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,7 +88,7 @@
                                     <td><span class="badge badge-mimados-primary fs-6">@c.Cantidad solicitudes</span></td>
                                     <td>@c.Precio.ToString("N2")</td>
                                     <td>@c.Total.ToString("N2")</td>
-                                    <td>@c.Proporcion</td>
+                                    <td>@(c.Proporcion*100) %</td>
                                 </tr>
                             }
                         }
