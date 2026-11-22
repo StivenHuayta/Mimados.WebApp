@@ -32,6 +32,7 @@ public static class AuthEndpoints
             }
 
             // Validación de coincidencia con el rol seleccionado si el usuario especificó uno
+            string rolSesion = resultado.Rol;
             if (!string.IsNullOrWhiteSpace(rolSeleccionado))
             {
                 if (rolSeleccionado.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
@@ -41,44 +42,46 @@ public static class AuthEndpoints
                     {
                         return Results.LocalRedirect("/login?error=Esta%20cuenta%20no%20cuenta%20con%20privilegios%20de%20Administrador.");
                     }
+                    rolSesion = "Admin";
                 }
                 else if (rolSeleccionado.Equals("Veterinario", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!resultado.Rol.Equals("Veterinario", StringComparison.OrdinalIgnoreCase) &&
-                        !resultado.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase) &&
-                        !resultado.EsAdmin)
+                    if (!resultado.EsVeterinario && !resultado.Rol.Equals("Veterinario", StringComparison.OrdinalIgnoreCase))
                     {
                         return Results.LocalRedirect("/login?error=Esta%20cuenta%20no%20est%C3%A1%20registrada%20como%20Personal%20Veterinario.");
                     }
+                    rolSesion = "Veterinario";
                 }
                 else if (rolSeleccionado.Equals("Cliente", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!resultado.Rol.Equals("Cliente", StringComparison.OrdinalIgnoreCase))
+                    if (!resultado.EsCliente && !resultado.Rol.Equals("Cliente", StringComparison.OrdinalIgnoreCase))
                     {
                         return Results.LocalRedirect("/login?error=Esta%20cuenta%20no%20est%C3%A1%20registrada%20como%20Cliente.");
                     }
+                    rolSesion = "Cliente";
                 }
             }
+
+            bool sesionEsAdmin = rolSesion.Equals("Admin", StringComparison.OrdinalIgnoreCase);
 
             var claims = new List<Claim>
             {
                 new(ClaimTypes.Name, resultado.Email),
                 new(ClaimTypes.Email, resultado.Email),
-                new(ClaimTypes.Role, resultado.Rol),
+                new(ClaimTypes.Role, rolSesion),
                 new("DisplayName", resultado.NombreCompleto),
                 new("UsuarioId", resultado.UsuarioId.ToString()),
                 new("Dni", resultado.Dni),
-                new("EsAdmin", resultado.EsAdmin ? "true" : "false")
+                new("EsAdmin", sesionEsAdmin ? "true" : "false")
             };
 
-            // Compatibilidad de roles cruzados
-            if (resultado.EsAdmin || resultado.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            // Claims exclusivos del rol elegido para esta sesión
+            if (sesionEsAdmin)
             {
                 claims.Add(new Claim(ClaimTypes.Role, "Administrador"));
-                claims.Add(new Claim(ClaimTypes.Role, "Veterinario"));
                 claims.Add(new Claim(ClaimTypes.Role, "Empleado"));
             }
-            else if (resultado.Rol.Equals("Veterinario", StringComparison.OrdinalIgnoreCase))
+            else if (rolSesion.Equals("Veterinario", StringComparison.OrdinalIgnoreCase))
             {
                 claims.Add(new Claim(ClaimTypes.Role, "Empleado"));
             }

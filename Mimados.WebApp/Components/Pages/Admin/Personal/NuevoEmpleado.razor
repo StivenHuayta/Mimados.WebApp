@@ -20,44 +20,94 @@
         <h5 class="card-title m-0 fw-bold">Datos del Empleado</h5>
     </div>
     <div class="card-body">
+        <div class="mb-4">
+            <label class="form-label fw-bold d-block">¿El empleado ya tiene una cuenta en Mimados?</label>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn @(!usarCuentaExistente ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => CambiarModoCuenta(false)">
+                    Crear cuenta nueva
+                </button>
+                <button type="button" class="btn @(usarCuentaExistente ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => CambiarModoCuenta(true)">
+                    Ya tiene cuenta (Buscar por DNI)
+                </button>
+            </div>
+        </div>
+
         <form>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">DNI</label>
-                    <input type="text" class="form-control" placeholder="Ingrese DNI (8 dígitos)" maxlength="8" @bind="empleado.Dni" />
+            @if (usarCuentaExistente)
+            {
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">Buscar por DNI</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Ingrese DNI (8 dígitos)" maxlength="8" @bind="dniBusqueda" />
+                            <button type="button" class="btn btn-outline-primary fw-semibold" @onclick="BuscarPorDniAsync" disabled="@buscandoDni">
+                                @(buscandoDni ? "Buscando..." : "Buscar")
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Nombres</label>
-                    <input type="text" class="form-control" placeholder="Nombres" @bind="empleado.Nombres" />
+
+                @if (usuarioEncontrado != null)
+                {
+                    <div class="alert alert-info mb-4">
+                        <div class="fw-bold mb-1">Cuenta encontrada: @usuarioEncontrado.Nombres @usuarioEncontrado.Apellidos</div>
+                        <div class="small">
+                            <strong>DNI:</strong> @usuarioEncontrado.Dni &nbsp;|&nbsp;
+                            <strong>Correo:</strong> @usuarioEncontrado.Email &nbsp;|&nbsp;
+                            <strong>Teléfono:</strong> @usuarioEncontrado.Telefono
+                        </div>
+                        <div class="small text-muted mt-1">Conservará su contraseña actual y mantendrá su acceso como cliente si ya lo tenía.</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">DNI</label>
+                        <input type="text" class="form-control" placeholder="Ingrese DNI (8 dígitos)" maxlength="8" @bind="empleado.Dni" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Nombres</label>
+                        <input type="text" class="form-control" placeholder="Nombres" @bind="empleado.Nombres" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Apellidos</label>
+                        <input type="text" class="form-control" placeholder="Apellidos" @bind="empleado.Apellidos" />
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Apellidos</label>
-                    <input type="text" class="form-control" placeholder="Apellidos" @bind="empleado.Apellidos" />
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Teléfono</label>
+                        <input type="text" class="form-control" placeholder="999888777" maxlength="9" @bind="empleado.Telefono" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Correo Electrónico</label>
+                        <input type="email" class="form-control" placeholder="correo@ejemplo.com" @bind="empleado.Email" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Fecha de Contratación</label>
+                        <input type="date" class="form-control" />
+                    </div>
                 </div>
-            </div>
+            }
 
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Teléfono</label>
-                    <input type="text" class="form-control" placeholder="999888777" maxlength="9" @bind="empleado.Telefono" />
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Correo Electrónico</label>
-                    <input type="email" class="form-control" placeholder="correo@ejemplo.com" @bind="empleado.Email" />
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Fecha de Contratación</label>
-                    <input type="date" class="form-control" />
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Rol</label>
-                    <select class="form-select" @bind="rolSeleccionado">
-                        <option value="Veterinario">Veterinario</option>
-                        <option value="Administrador">Administrador</option>
-                    </select>
+                    <label class="form-label fw-bold d-block">Roles del Empleado</label>
+                    <div class="mt-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkNuevoAdmin" @bind="empleado.EsAdmin" />
+                            <label class="form-check-label" for="chkNuevoAdmin">Administrador</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkNuevoVet" @bind="empleado.EsVeterinario" />
+                            <label class="form-check-label" for="chkNuevoVet">Veterinario</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Código CMP (Si es veterinario)</label>
@@ -78,12 +128,15 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Contraseña de Acceso</label>
-                    <input type="password" class="form-control" placeholder="Contraseña" @bind="empleado.Password" />
+            @if (!usarCuentaExistente)
+            {
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Contraseña de Acceso</label>
+                        <input type="password" class="form-control" placeholder="Contraseña" @bind="empleado.Password" />
+                    </div>
                 </div>
-            </div>
+            }
         </form>
     </div>
     <div class="card-footer bg-light d-flex justify-content-end gap-2">
@@ -95,26 +148,100 @@
 </div>
 
 @code {
-    private Empleado empleado = new Empleado { SedeId = 1, Activo = true };
-    private string rolSeleccionado = "Veterinario";
+    private Empleado empleado = new Empleado { SedeId = 1, Activo = true, EsVeterinario = true };
     private string? mensajeAlerta;
     private bool cargando = false;
 
+    private bool usarCuentaExistente = false;
+    private string dniBusqueda = string.Empty;
+    private bool buscandoDni = false;
+    private Empleado? usuarioEncontrado;
+
+    private void CambiarModoCuenta(bool existente)
+    {
+        usarCuentaExistente = existente;
+        mensajeAlerta = null;
+        usuarioEncontrado = null;
+        dniBusqueda = string.Empty;
+        empleado.Id = 0;
+        if (existente)
+        {
+            empleado.Dni = string.Empty;
+            empleado.Nombres = string.Empty;
+            empleado.Apellidos = string.Empty;
+            empleado.Email = string.Empty;
+            empleado.Telefono = string.Empty;
+            empleado.Password = string.Empty;
+        }
+    }
+
+    private async Task BuscarPorDniAsync()
+    {
+        mensajeAlerta = null;
+        usuarioEncontrado = null;
+        empleado.Id = 0;
+
+        if (string.IsNullOrWhiteSpace(dniBusqueda) || dniBusqueda.Trim().Length != 8)
+        {
+            mensajeAlerta = "Ingrese un DNI válido de 8 dígitos para buscar.";
+            return;
+        }
+
+        buscandoDni = true;
+        try
+        {
+            var (found, usuario, message) = await EmpleadoService.BuscarUsuarioPorDniAsync(dniBusqueda);
+            if (found && usuario != null)
+            {
+                usuarioEncontrado = usuario;
+                empleado.Id = usuario.Id;
+                empleado.Dni = usuario.Dni;
+                empleado.Nombres = usuario.Nombres;
+                empleado.Apellidos = usuario.Apellidos;
+                empleado.Email = usuario.Email;
+                empleado.Telefono = usuario.Telefono;
+            }
+            else
+            {
+                mensajeAlerta = message;
+            }
+        }
+        finally
+        {
+            buscandoDni = false;
+        }
+    }
+
     private async Task GuardarEmpleado()
     {
-        if (string.IsNullOrWhiteSpace(empleado.Dni) || string.IsNullOrWhiteSpace(empleado.Nombres) || string.IsNullOrWhiteSpace(empleado.Email))
+        if (cargando) return;
+
+        if (usarCuentaExistente)
+        {
+            if (usuarioEncontrado == null || empleado.Id <= 0)
+            {
+                mensajeAlerta = "Primero busca y selecciona una cuenta existente por DNI.";
+                return;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(empleado.Dni) || string.IsNullOrWhiteSpace(empleado.Nombres) || string.IsNullOrWhiteSpace(empleado.Email))
         {
             mensajeAlerta = "Por favor completa los campos obligatorios (DNI, Nombres, Correo).";
             return;
         }
 
+        if (!empleado.EsAdmin && !empleado.EsVeterinario)
+        {
+            mensajeAlerta = "Debe seleccionar al menos un rol (Administrador o Veterinario).";
+            return;
+        }
+
         cargando = true;
         mensajeAlerta = null;
-        empleado.EsAdmin = (rolSeleccionado == "Administrador");
 
         try
         {
-            bool exito = await EmpleadoService.RegistrarEmpleadoAsync(empleado);
+            var (exito, mensaje) = await EmpleadoService.RegistrarEmpleadoAsync(empleado);
 
             if (exito)
             {
@@ -122,7 +249,7 @@
             }
             else
             {
-                mensajeAlerta = "No se pudo registrar el empleado. Verifica los datos o si el DNI/correo ya existen.";
+                mensajeAlerta = mensaje;
             }
         }
         catch (Exception)

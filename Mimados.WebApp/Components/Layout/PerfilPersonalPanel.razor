@@ -1,0 +1,145 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Mimados.WebApp.Services.Interfaces
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IUsuarioService UsuarioService
+
+<AuthorizeView Roles="Admin, Administrador, Veterinario, Empleado">
+    <Authorized>
+        @{
+            bool esAdmin = context.User.IsInRole("Admin") || context.User.IsInRole("Administrador");
+        }
+        <div class="mb-4">
+            <h3 class="m-0 text-dark fw-bold">Mi Perfil (@(esAdmin ? "Administrador" : "Veterinario"))</h3>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        Datos de la Cuenta
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">DNI</label>
+                                <input type="text" class="form-control bg-light" value="@(context.User.FindFirst("Dni")?.Value ?? "")" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nombres y Apellidos</label>
+                                <input type="text" class="form-control bg-light" value="@(context.User.FindFirst("DisplayName")?.Value ?? "")" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Correo Electrónico</label>
+                                <input type="email" class="form-control bg-light" value="@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? context.User.Identity?.Name ?? "")" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Rol en esta sesión</label>
+                                <input type="text" class="form-control bg-light" value="@(esAdmin ? "Administrador" : "Veterinario")" disabled />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom fw-bold text-dark">
+                        <i class="bi bi-heart-pulse text-primary me-2"></i>Perfil de Cliente (Para tus Mascotas)
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(mensajeAlerta))
+                        {
+                            <div class="alert @(esError ? "alert-danger" : "alert-success") mb-3">@mensajeAlerta</div>
+                        }
+
+                        @if (cargandoEstado)
+                        {
+                            <div class="text-muted">Verificando estado de perfil de cliente...</div>
+                        }
+                        else if (esClienteActivo)
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success fs-6">Perfil de Cliente activo</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted small mb-3">
+                                Activa tu perfil de cliente con un clic para poder registrar tus propias mascotas y reservar citas usando tu cuenta actual.
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Dirección (Opcional)</label>
+                                <input type="text" class="form-control" maxlength="60" placeholder="Ej: Av. Universitaria 1801" @bind="direccionCliente" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Teléfono de Emergencia (Opcional)</label>
+                                <input type="text" class="form-control" maxlength="9" placeholder="Ej: 999888777" @bind="telefonoEmergencia" />
+                            </div>
+                            <button type="button" class="btn btn-primary fw-bold w-100" @onclick="ActivarClienteAsync" disabled="@activando">
+                                <i class="bi bi-person-plus-fill me-1"></i> @(activando ? "Activando..." : "Activar mi perfil de Cliente")
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="alert alert-warning shadow-sm my-4">
+            No posees permisos para ver esto. Por favor, contacta al soporte.
+        </div>
+        <a href="/login" class="btn btn-outline-primary">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Ir al Login
+        </a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private int usuarioId;
+    private bool cargandoEstado = true;
+    private bool esClienteActivo = false;
+    private bool activando = false;
+    private string direccionCliente = string.Empty;
+    private string telefonoEmergencia = string.Empty;
+    private string? mensajeAlerta;
+    private bool esError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idClaim = authState.User.FindFirst("UsuarioId")?.Value;
+        if (int.TryParse(idClaim, out int id) && id > 0)
+        {
+            usuarioId = id;
+            esClienteActivo = await UsuarioService.EsClienteActivoAsync(usuarioId);
+        }
+        cargandoEstado = false;
+    }
+
+    private async Task ActivarClienteAsync()
+    {
+        if (usuarioId <= 0 || activando) return;
+
+        activando = true;
+        mensajeAlerta = null;
+        try
+        {
+            var (success, message) = await UsuarioService.ActivarPerfilClienteAsync(
+                usuarioId,
+                direccionCliente,
+                telefonoEmergencia
+            );
+            esError = !success;
+            mensajeAlerta = message;
+            if (success)
+            {
+                esClienteActivo = true;
+            }
+        }
+        finally
+        {
+            activando = false;
+        }
+    }
+}

@@ -41,13 +41,37 @@ public class EmpleadoService : IEmpleadoService
         }
     }
 
-    public async Task<bool> RegistrarEmpleadoAsync(Empleado empleado)
+    public async Task<(bool Found, Empleado? Usuario, string Message)> BuscarUsuarioPorDniAsync(string dni)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{PATH}/buscar-usuario?dni={Uri.EscapeDataString(dni.Trim())}");
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var apiResponse = JsonSerializer.Deserialize<ApiResponseJava<Empleado>>(jsonString, options);
+
+            if (response.IsSuccessStatusCode && apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+            {
+                return (true, apiResponse.Data, apiResponse.Message ?? "Usuario encontrado.");
+            }
+
+            return (false, null, apiResponse?.Message ?? "No se encontró ninguna cuenta con ese DNI.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar usuario por DNI {Dni}", dni);
+            return (false, null, "No se pudo conectar con el servidor al buscar el DNI.");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> RegistrarEmpleadoAsync(Empleado empleado)
     {
         try
         {
             // Enviamos el objeto plano exacto que espera EmpleadoRS.EmpleadoRequest en Java
             var payload = new
             {
+                id = empleado.Id > 0 ? empleado.Id : (int?)null,
                 dni = empleado.Dni,
                 nombres = empleado.Nombres,
                 apellidos = empleado.Apellidos,
@@ -57,18 +81,27 @@ public class EmpleadoService : IEmpleadoService
                 sedeId = empleado.SedeId,
                 codigoCmvp = empleado.CodigoCmvp,
                 esAdmin = empleado.EsAdmin,
+                esVeterinario = empleado.EsVeterinario,
                 activo = empleado.Activo
             };
 
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"{PATH}/registrar", content);
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var apiResponse = JsonSerializer.Deserialize<ApiResponseJava<object>>(jsonString, options);
 
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode && (apiResponse == null || apiResponse.Success))
+            {
+                return (true, apiResponse?.Message ?? "Empleado registrado correctamente.");
+            }
+
+            return (false, apiResponse?.Message ?? "No se pudo registrar el empleado.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al registrar empleado");
-            return false;
+            return (false, "No se pudo conectar con el servidor. Inténtalo nuevamente.");
         }
     }
 
@@ -82,6 +115,7 @@ public class EmpleadoService : IEmpleadoService
                 sedeId = empleado.SedeId,
                 codigoCmvp = empleado.CodigoCmvp,
                 esAdmin = empleado.EsAdmin,
+                esVeterinario = empleado.EsVeterinario,
                 activo = empleado.Activo
             };
 

@@ -15,6 +15,8 @@ public class AuthResultado
     private string _email = string.Empty;
     private string _rol = string.Empty;
     private bool _esAdmin;
+    private bool _esVeterinario;
+    private bool _esCliente;
     private bool _activo;
     private string? _codigoCmvp;
     private int? _sedeId;
@@ -39,6 +41,12 @@ public class AuthResultado
 
     [JsonPropertyName("esAdmin")]
     public bool EsAdmin { get => _esAdmin; set => _esAdmin = value; }
+
+    [JsonPropertyName("esVeterinario")]
+    public bool EsVeterinario { get => _esVeterinario; set => _esVeterinario = value; }
+
+    [JsonPropertyName("esCliente")]
+    public bool EsCliente { get => _esCliente; set => _esCliente = value; }
 
     [JsonPropertyName("activo")]
     public bool Activo { get => _activo; set => _activo = value; }

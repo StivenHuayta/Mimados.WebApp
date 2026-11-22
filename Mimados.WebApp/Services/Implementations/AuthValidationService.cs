@@ -115,6 +115,8 @@ public class AuthValidationService : IAuthValidationService
                     Email = string.IsNullOrWhiteSpace(data.Email) ? input : data.Email,
                     Rol = rol,
                     EsAdmin = data.EsAdmin,
+                    EsVeterinario = data.EsVeterinario,
+                    EsCliente = data.EsCliente,
                     Activo = data.Activo,
                     CodigoCmvp = data.CodigoCmvp,
                     SedeId = data.SedeId
