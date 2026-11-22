@@ -1,8 +1,17 @@
 @page "/reportes/citas"
+@rendermode InteractiveServer
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services.Interfaces
+@inject ICitaService CitaService
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="m-0 text-dark fw-bold">Reporte de Citas</h3>
 </div>
+
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-warning mb-3">@mensajeError</div>
+}
 
 <!-- Filtros del Reporte -->
 <div class="card shadow-sm border-0 mb-4">
@@ -10,35 +19,40 @@
         <h5 class="card-title m-0 fw-bold text-primary"><i class="bi bi-funnel me-2"></i>Filtros de Búsqueda</h5>
     </div>
     <div class="card-body bg-white">
-        <form class="row align-items-end g-3">
+        <div class="row align-items-end g-3">
             <div class="col-md-3">
                 <label class="form-label fw-bold">Fecha Inicio</label>
-                <input type="date" class="form-control" />
+                <input type="date" class="form-control" @bind="fechaInicio" @bind:after="BuscarCitasAsync" />
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-bold">Fecha Fin</label>
-                <input type="date" class="form-control" />
+                <input type="date" class="form-control" @bind="fechaFin" @bind:after="BuscarCitasAsync" />
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-bold">Estado de Cita</label>
-                <select class="form-select">
+                <select class="form-select" @bind="estadoSeleccionado" @bind:after="BuscarCitasAsync">
                     <option value="">-- Todos los estados --</option>
-                    <option value="Programada">Programada</option>
-                    <option value="Completada">Completada</option>
-                    <option value="Cancelada">Cancelada</option>
+                    <option value="PROGRAMADA">Programada</option>
+                    <option value="CONFIRMADA">Confirmada</option>
+                    <option value="ATENDIDA">Atendida</option>
+                    <option value="CANCELADA">Cancelada</option>
+                    <option value="NO_ASISTIO">No Asistió</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100 fw-bold">Generar Reporte</button>
+                <button type="button" class="btn btn-primary w-100 fw-bold" disabled="@(cargando || citas.Count == 0)">
+                    Generar Reporte
+                </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 <!-- Resultados del Reporte -->
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="card-title m-0 fw-bold">Listado de Citas Encontradas</h5>
+        <span class="badge bg-light text-primary fw-bold">@citas.Count registro(s)</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -55,7 +69,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (citas.Count == 0)
+                    @if (cargando)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Buscando citas...</td>
+                        </tr>
+                    }
+                    else if (citas.Count == 0)
                     {
                         <tr>
                             <td colspan="7" class="text-center text-muted py-4">No se encontraron citas con los filtros seleccionados.</td>
@@ -66,13 +86,13 @@
                         @foreach (var c in citas)
                         {
                             <tr>
-                                <td>@c.Id</td>
-                                <td>@c.FechaHora</td>
-                                <td>@c.Sede</td>
-                                <td>@c.Mascota</td>
-                                <td>@c.Veterinario</td>
-                                <td>@c.Motivo</td>
-                                <td><span class="badge @c.EstadoClase">@c.Estado</span></td>
+                                <td>@c.CitaId</td>
+                                <td>@FormatearFechaHora(c.FechaHoraInicio)</td>
+                                <td>@c.NombreSede</td>
+                                <td>@c.NombreMascota</td>
+                                <td>Dr/a. @c.NombreVeterinario</td>
+                                <td>@(string.IsNullOrWhiteSpace(c.Motivo) ? "-" : c.Motivo)</td>
+                                <td><span class="badge @ObtenerClaseEstado(c.Estado)">@FormatearEstado(c.Estado)</span></td>
                             </tr>
                         }
                     }
@@ -83,6 +103,65 @@
 </div>
 
 @code {
-    private record CitaReporteItem(string Id, string FechaHora, string Sede, string Mascota, string Veterinario, string Motivo, string Estado, string EstadoClase);
-    private List<CitaReporteItem> citas = new();
+    private DateOnly? fechaInicio;
+    private DateOnly? fechaFin;
+    private string estadoSeleccionado = string.Empty;
+
+    private List<CitaReporteDto> citas = new();
+    private bool cargando = false;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BuscarCitasAsync();
+    }
+
+    private async Task BuscarCitasAsync()
+    {
+        mensajeError = null;
+
+        if (fechaInicio.HasValue && fechaFin.HasValue && fechaFin.Value < fechaInicio.Value)
+        {
+            mensajeError = "La fecha de fin no puede ser anterior a la fecha de inicio.";
+            citas.Clear();
+            return;
+        }
+
+        cargando = true;
+        try
+        {
+            citas = await CitaService.ListarParaReporteAsync(fechaInicio, fechaFin, estadoSeleccionado);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string FormatearFechaHora(string? fechaIso)
+    {
+        if (DateTime.TryParse(fechaIso, out var dt))
+            return dt.ToString("dd/MM/yyyy HH:mm");
+        return fechaIso ?? "-";
+    }
+
+    private string FormatearEstado(string estado) => estado switch
+    {
+        "PROGRAMADA" => "Programada",
+        "CONFIRMADA" => "Confirmada",
+        "ATENDIDA" => "Atendida",
+        "CANCELADA" => "Cancelada",
+        "NO_ASISTIO" => "No Asistió",
+        _ => estado
+    };
+
+    private string ObtenerClaseEstado(string estado) => estado switch
+    {
+        "PROGRAMADA" => "bg-primary",
+        "CONFIRMADA" => "bg-info text-dark",
+        "ATENDIDA" => "bg-success",
+        "CANCELADA" => "bg-danger",
+        "NO_ASISTIO" => "bg-secondary",
+        _ => "bg-secondary"
+    };
 }
