@@ -209,4 +209,32 @@ public class CitaService : ICitaService
             return new PageResultDto<CitaVeterinarioDto>();
         }
     }
+
+    public async Task<List<CitaReporteDto>> ListarParaReporteAsync(
+    DateOnly? fechaInicio, DateOnly? fechaFin, string? estado)
+{
+    try
+    {
+        var queryParams = new List<string>();
+
+        if (fechaInicio.HasValue)
+            queryParams.Add($"fechaInicio={fechaInicio.Value:yyyy-MM-dd}");
+
+        if (fechaFin.HasValue)
+            queryParams.Add($"fechaFin={fechaFin.Value:yyyy-MM-dd}");
+
+        if (!string.IsNullOrWhiteSpace(estado))
+            queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+        var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+        var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<CitaReporteDto>>>($"{PATH}/reporte{queryString}");
+
+        return respuesta?.Data ?? new List<CitaReporteDto>();
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error al listar citas para reporte");
+        return new List<CitaReporteDto>();
+    }
+}
 }
