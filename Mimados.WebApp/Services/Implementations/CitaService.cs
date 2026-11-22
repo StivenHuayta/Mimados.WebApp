@@ -123,4 +123,90 @@ public class CitaService : ICitaService
             throw new Exception("No se pudo conectar con el servidor. Inténtalo nuevamente.");
         }
     }
+
+    public async Task<List<CitaListadoEmpleadoDTO>> ListarTodasAsync()
+    {
+        try
+        {
+            var respuesta = await _http.GetFromJsonAsync<
+                ApiResponse<List<CitaListadoEmpleadoDTO>>>(
+                    $"{PATH}/listar");
+
+            if (respuesta?.Success != true)
+            {
+                throw new InvalidOperationException(
+                    respuesta?.Message ?? "No se pudieron obtener las citas.");
+            }
+
+            return respuesta.Data ?? new List<CitaListadoEmpleadoDTO>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar todas las citas");
+            throw;
+        }
+    }
+
+    public async Task<bool> RegistrarEmpleadoAsync(Cita cita, int sedeId, int sedeServicioId)
+    {
+        try
+        {
+            var datos = new
+            {
+                empleadoId = cita.EmpleadoId,
+                mascotaId = cita.MascotaId,
+                sedeId,
+                sedeServicioId,
+                fechaHoraInicio = cita.FechaHoraInicio.ToString("yyyy-MM-ddTHH:mm:ss"),
+                fechaHoraFin = cita.FechaHoraFin.ToString("yyyy-MM-ddTHH:mm:ss"),
+                motivo = cita.Motivo
+            };
+
+            var response = await _http.PostAsJsonAsync($"{PATH}/registrarEmpleado", datos);
+            var resultado = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+
+            if (!response.IsSuccessStatusCode || resultado?.Success != true)
+                throw new InvalidOperationException(resultado?.Message ?? "No se pudo registrar la cita.");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al registrar cita del empleado para mascota {MascotaId}", cita.MascotaId);
+            throw;
+        }
+    }
+
+    public async Task<PageResultDto<CitaVeterinarioDto>> ListarPorVeterinarioAsync(
+        int empleadoId, string? searchText, DateTime? fecha, string? estado,
+        int pageNumber, int recordsPerPage)
+    {
+        try
+        {
+            var queryParams = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"recordsPerPage={recordsPerPage}"
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+                queryParams.Add($"searchText={Uri.EscapeDataString(searchText.Trim())}");
+
+            if (fecha.HasValue)
+                queryParams.Add($"fecha={fecha.Value:yyyy-MM-dd}");
+
+            if (!string.IsNullOrWhiteSpace(estado))
+                queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+            var url = $"{PATH}/veterinario/{empleadoId}?{string.Join("&", queryParams)}";
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<PageResultDto<CitaVeterinarioDto>>>(url);
+
+            return respuesta?.Data ?? new PageResultDto<CitaVeterinarioDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar citas del veterinario {EmpleadoId}", empleadoId);
+            return new PageResultDto<CitaVeterinarioDto>();
+        }
+    }
 }

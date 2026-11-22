@@ -10,4 +10,9 @@ public interface ICitaService
     Task<bool> RegistrarAsync(Cita cita);
     Task<bool> CancelarAsync(int id);
     Task<bool> ModificarAsync(Cita cita);
+    Task<List<CitaListadoEmpleadoDTO>> ListarTodasAsync();
+    Task<bool> RegistrarEmpleadoAsync(Cita cita, int sedeId, int sedeServicioId);
+    Task<PageResultDto<CitaVeterinarioDto>> ListarPorVeterinarioAsync(
+        int empleadoId, string? searchText, DateTime? fecha, string? estado,
+        int pageNumber, int recordsPerPage);
 }

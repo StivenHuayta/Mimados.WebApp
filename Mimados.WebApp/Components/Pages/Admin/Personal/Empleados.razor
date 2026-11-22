@@ -1,8 +1,10 @@
 ﻿@page "/empleados"
+@rendermode InteractiveServer
 @using Mimados.WebApp.Models
-@using Mimados.WebApp.Services
+@using Mimados.WebApp.Services 
 @inject NavigationManager Navigation
 @inject IEmpleadoService EmpleadoService
+@inject ISedeService SedeService
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="m-0 text-dark fw-bold">Gestión de Empleados</h3>
@@ -11,9 +13,9 @@
     </button>
 </div>
 
-@if (!string.IsNullOrEmpty(mensajeError))
+@if (!string.IsNullOrEmpty(mensajeAlerta))
 {
-    <div class="alert alert-danger mb-3">@mensajeError</div>
+    <div class="alert @(esError ? "alert-danger" : "alert-success") mb-3">@mensajeAlerta</div>
 }
 
 <div class="card shadow-sm border-0">
@@ -68,8 +70,15 @@
                                     }
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-primary fw-semibold">Editar</button>
-                                    <button class="btn btn-sm btn-outline-danger fw-semibold ms-1">Eliminar</button>
+                                    <button class="btn btn-sm btn-outline-primary fw-semibold" @onclick="() => AbrirModalEdicion(emp)">
+                                        Editar
+                                    </button>
+                                    @if (emp.Activo)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger fw-semibold ms-1" @onclick="() => DesactivarEmpleado(emp)">
+                                            Eliminar
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -80,32 +89,194 @@
     </div>
 </div>
 
+@if (mostrarModal && empleadoEditando != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Editar Empleado: @empleadoEditando.Nombres @empleadoEditando.Apellidos</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rol</label>
+                        <select class="form-select" @bind="rolEdicion">
+                            <option value="Veterinario">Veterinario</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Código CMP (Si es veterinario)</label>
+                        <input type="text" class="form-control" @bind="empleadoEditando.CodigoCmvp" @bind:event="oninput" placeholder="Ej: CMP-10293" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Sede Asignada</label>
+                        <select class="form-select" @bind="empleadoEditando.SedeId">
+                            @if (listaSedes != null)
+                            {
+                                @foreach (var sede in listaSedes)
+                                {
+                                    <option value="@sede.Id">@sede.Nombre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Estado</label>
+                        <select class="form-select" @bind="estadoEdicion">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-bold" @onclick="GuardarEdicion" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar Cambios")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    private List<EmpleadoRequest>? listaEmpleados;
-    private string? mensajeError;
+    private List<Empleado>? listaEmpleados;
+    private string? mensajeAlerta;
+    private bool esError = false;
+    private bool guardando = false;
+
+    // Variables para el modal de edición
+    private bool mostrarModal = false;
+    private Empleado? empleadoEditando;
+    private string rolEdicion = "Veterinario";
+    private string estadoEdicion = "true";
+    private List<Sede> listaSedes;
 
     protected override async Task OnInitializedAsync()
     {
+        listaSedes = await SedeService.ObtenerSedesAsync();
+        await CargarEmpleados();
+    }
+
+    private async Task CargarEmpleados()
+    {
         try
         {
-            var respuesta = await EmpleadoService.ListarEmpleadosAsync();
-            if (respuesta != null && respuesta.Success)
-            {
-                listaEmpleados = respuesta.Data;
-            }
-            else
-            {
-                mensajeError = respuesta?.Message ?? "Error al cargar la lista.";
-            }
+            listaEmpleados = await EmpleadoService.ListarEmpleadosAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            mensajeError = "No se pudieron cargar los empleados en este momento. Inténtalo nuevamente.";
+            esError = true;
+            mensajeAlerta = "No se pudieron cargar los empleados en este momento. Inténtalo nuevamente.";
+            listaEmpleados = new List<Empleado>();
         }
     }
 
     private void IrARegistro()
     {
         Navigation.NavigateTo("/empleados/nuevo");
+    }
+
+    private void AbrirModalEdicion(Empleado emp)
+    {
+        empleadoEditando = new Empleado
+        {
+            Id = emp.Id,
+            Dni = emp.Dni,
+            Nombres = emp.Nombres,
+            Apellidos = emp.Apellidos,
+            Email = emp.Email,
+            Telefono = emp.Telefono,
+            SedeId = emp.SedeId > 0 ? emp.SedeId : 1,
+            CodigoCmvp = emp.CodigoCmvp,
+            EsAdmin = emp.EsAdmin,
+            Activo = emp.Activo
+        };
+        rolEdicion = emp.EsAdmin ? "Administrador" : "Veterinario";
+        estadoEdicion = emp.Activo ? "true" : "false";
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+        empleadoEditando = null;
+    }
+
+    private async Task GuardarEdicion()
+    {
+        if (empleadoEditando == null) return;
+
+        guardando = true;
+        mensajeAlerta = null;
+
+        empleadoEditando.EsAdmin = (rolEdicion == "Administrador");
+        empleadoEditando.Activo = (estadoEdicion == "true");
+        if (empleadoEditando.EsAdmin)
+        {
+            empleadoEditando.CodigoCmvp = null;
+        }
+
+        try
+        {
+            bool exito = await EmpleadoService.ModificarEmpleadoAsync(empleadoEditando);
+            if (exito)
+            {
+                CerrarModal();
+                await CargarEmpleados();
+                esError = false;
+                mensajeAlerta = "Empleado actualizado correctamente.";
+            }
+            else
+            {
+                esError = true;
+                mensajeAlerta = "No se pudo actualizar el empleado. Verifica los datos.";
+            }
+        }
+        catch (Exception)
+        {
+            esError = true;
+            mensajeAlerta = "Error de conexión al intentar modificar el empleado.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarEmpleado(Empleado emp)
+    {
+        mensajeAlerta = null;
+        var empDesactivar = new Empleado
+        {
+            Id = emp.Id,
+            SedeId = emp.SedeId > 0 ? emp.SedeId : 1,
+            CodigoCmvp = emp.CodigoCmvp,
+            EsAdmin = emp.EsAdmin,
+            Activo = false
+        };
+
+        try
+        {
+            bool exito = await EmpleadoService.ModificarEmpleadoAsync(empDesactivar);
+            if (exito)
+            {
+                await CargarEmpleados();
+                esError = false;
+                mensajeAlerta = $"El empleado {emp.Nombres} {emp.Apellidos} ha sido desactivado.";
+            }
+            else
+            {
+                esError = true;
+                mensajeAlerta = "No se pudo desactivar el empleado.";
+            }
+        }
+        catch (Exception)
+        {
+            esError = true;
+            mensajeAlerta = "Error de conexión al intentar desactivar el empleado.";
+        }
     }
 }

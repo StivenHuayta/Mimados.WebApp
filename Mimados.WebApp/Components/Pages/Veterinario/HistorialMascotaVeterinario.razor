@@ -1,7 +1,10 @@
 @page "/veterinario/historial"
 @page "/veterinario/historial/{MascotaId:int}"
 @rendermode InteractiveServer
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services.Interfaces
 @inject NavigationManager Navigation
+@inject IMascotaService MascotaService
 
 <div class="container-fluid px-0">
     <!-- Encabezado y navegación de regreso -->
@@ -28,12 +31,16 @@
     <!-- Barra de Selección de Paciente / Búsqueda rápida -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body bg-white py-3">
-            <div class="row g-3 align-items-center">
+            <div class="row g-3 align-items-end">
                 <div class="col-md-5">
                     <label class="form-label fw-bold small text-secondary mb-1">
-                        <i class="bi bi-search me-1"></i>Seleccionar Paciente de la Clínica
+                        <i class="bi bi-search me-1"></i>Seleccionar Paciente de la Clínica (@totalPacientes)
                     </label>
                     <select class="form-select bg-white" @onchange="OnPacienteCambiado" value="@(mascotaSeleccionada?.MascotaId ?? 0)">
+                        @if (listaMascotas.Count == 0)
+                        {
+                            <option value="0">No se encontraron pacientes</option>
+                        }
                         @foreach (var m in listaMascotas)
                         {
                             <option value="@m.MascotaId">@m.Nombre (@m.Especie - @m.Raza) • Dueño: @m.NombreCliente</option>
@@ -41,28 +48,33 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold small text-secondary mb-1">Buscar por Nombre o DNI del Dueño</label>
-                    <input type="text" class="form-control bg-white" placeholder="Filtrar paciente..."
-                           @bind="filtroBusquedaPaciente" @bind:event="oninput" />
+                    <label class="form-label fw-bold small text-secondary mb-1">Buscar por Mascota, Dueño o DNI</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white" placeholder="Filtrar paciente..."
+                               @bind="filtroBusquedaPaciente" />
+                        <button class="btn btn-outline-primary" type="button" @onclick="BuscarPacientes" disabled="@cargandoPacientes">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-3 text-md-end mt-md-4">
-                    <button class="btn btn-outline-primary w-100" @onclick="DescargarReportePdf">
+                <div class="col-md-3 text-md-end">
+                    <button class="btn btn-outline-primary w-100" @onclick="DescargarReportePdf" disabled="@(mascotaSeleccionada == null)">
                         <i class="bi bi-file-earmark-pdf me-1"></i> Descargar Historial (PDF)
                     </button>
                 </div>
             </div>
+            @if (TotalPaginas > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <span class="text-muted small">Página @(pageNumber + 1) de @TotalPaginas</span>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" disabled="@(pageNumber <= 0 || cargandoPacientes)" @onclick="PaginaAnterior">Anterior</button>
+                        <button type="button" class="btn btn-outline-secondary" disabled="@(pageNumber + 1 >= TotalPaginas || cargandoPacientes)" @onclick="PaginaSiguiente">Siguiente</button>
+                    </div>
+                </div>
+            }
         </div>
     </div>
-
-    @* Alerta de feedback al descargar *@
-    @if (mostrarAlertaPdf)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <strong>Reporte Clínico Generado:</strong> El expediente completo de <strong>@(mascotaSeleccionada?.Nombre)</strong> ha sido procesado para impresión / descarga.
-            <button type="button" class="btn-close" @onclick="() => mostrarAlertaPdf = false"></button>
-        </div>
-    }
 
     @if (mascotaSeleccionada != null)
     {
@@ -111,10 +123,6 @@
                                 <span class="text-muted">Peso referencial:</span>
                                 <span class="fw-bold text-dark ms-1">@(mascotaSeleccionada.PesoReferencial?.ToString("0.0") ?? "--") kg</span>
                             </div>
-                            <div class="col-12 mt-2">
-                                <span class="text-muted">Alergias o Condiciones:</span>
-                                <span class="badge badge-mimados-neutral ms-1">@mascotaSeleccionada.Alergias</span>
-                            </div>
                         </div>
                     </div>
 
@@ -141,12 +149,12 @@
                             <div class="col-sm-6">
                                 <span class="text-muted">Tel. Emergencia:</span>
                                 <span class="fw-bold text-danger ms-1">
-                                    <i class="bi bi-telephone-plus me-1"></i>@mascotaSeleccionada.TelefonoEmergencia
+                                    <i class="bi bi-telephone-plus me-1"></i>@(mascotaSeleccionada.TelefonoEmergencia ?? "No registrado")
                                 </span>
                             </div>
                             <div class="col-12">
                                 <span class="text-muted">Dirección:</span>
-                                <span class="fw-semibold text-dark ms-1">@mascotaSeleccionada.DireccionCliente</span>
+                                <span class="fw-semibold text-dark ms-1">@(mascotaSeleccionada.DireccionCliente ?? "No registrada")</span>
                             </div>
                         </div>
                     </div>
@@ -166,7 +174,13 @@
             </div>
         </div>
 
-        @if (historialAtenciones.Count == 0)
+        @if (cargandoHistorial)
+        {
+            <div class="card shadow-sm border-0 text-center py-4">
+                <div class="card-body text-muted">Cargando historial clínico...</div>
+            </div>
+        }
+        else if (historialAtenciones.Count == 0)
         {
             <div class="card shadow-sm border-0 text-center py-5">
                 <div class="card-body">
@@ -191,12 +205,12 @@
                                     <i class="bi bi-calendar-event text-primary me-1"></i>
                                     @atencion.FechaHoraRegistro.ToString("dd/MM/yyyy HH:mm")
                                 </span>
-                                <span class="badge badge-mimados-solid me-1">@atencion.ServicioRealizado</span>
+                                <span class="badge badge-mimados-solid me-1">@(string.IsNullOrWhiteSpace(atencion.ServicioRealizado) ? "Consulta" : atencion.ServicioRealizado)</span>
                                 <span class="badge badge-mimados-neutral">Cita #@atencion.CitaId</span>
                             </div>
                             <div class="text-muted small">
                                 <i class="bi bi-person-badge text-secondary me-1"></i>
-                                Atendido por: <strong class="text-dark">@atencion.NombreVeterinario</strong> (@atencion.CodigoCmvp)
+                                Atendido por: <strong class="text-dark">@atencion.NombreVeterinario</strong> (@(atencion.CodigoCmvp ?? "S/N"))
                             </div>
                         </div>
                         <div class="card-body">
@@ -223,37 +237,33 @@
                             </div>
 
                             <div class="row g-3">
-                                <!-- Síntomas -->
                                 <div class="col-md-6">
                                     <div class="p-3 bg-light rounded border h-100">
                                         <h6 class="fw-bold text-secondary small text-uppercase mb-2">
                                             <i class="bi bi-chat-left-dots text-primary me-1"></i> Anamnesis / Síntomas observados
                                         </h6>
-                                        <p class="mb-0 text-dark small">@atencion.Sintomas</p>
+                                        <p class="mb-0 text-dark small">@(atencion.Sintomas ?? "-")</p>
                                     </div>
                                 </div>
 
-                                <!-- Diagnóstico -->
                                 <div class="col-md-6">
                                     <div class="p-3 bg-light rounded border h-100">
                                         <h6 class="fw-bold text-secondary small text-uppercase mb-2">
                                             <i class="bi bi-clipboard2-check text-primary me-1"></i> Diagnóstico Veterinario
                                         </h6>
-                                        <p class="mb-0 text-dark small fw-semibold">@atencion.Diagnostico</p>
+                                        <p class="mb-0 text-dark small fw-semibold">@(atencion.Diagnostico ?? "-")</p>
                                     </div>
                                 </div>
 
-                                <!-- Tratamiento Recetado -->
                                 <div class="col-12">
                                     <div class="p-3 bg-white rounded border border-primary-subtle shadow-xs">
                                         <h6 class="fw-bold text-primary small text-uppercase mb-2">
                                             <i class="bi bi-capsule text-primary me-1"></i> Tratamiento y Medicación Prescrita
                                         </h6>
-                                        <p class="mb-0 text-dark small">@atencion.TratamientoRecetado</p>
+                                        <p class="mb-0 text-dark small">@(atencion.TratamientoRecetado ?? "-")</p>
                                     </div>
                                 </div>
 
-                                <!-- Observaciones y Cuidados -->
                                 @if (!string.IsNullOrWhiteSpace(atencion.Observaciones))
                                 {
                                     <div class="col-12">
@@ -276,64 +286,100 @@
     [Parameter]
     public int? MascotaId { get; set; }
 
-    private List<Mascota> listaMascotas = new();
-    private Mascota? mascotaSeleccionada;
-    private List<Atencion> historialAtenciones = new();
+    private List<PacienteVeterinarioDto> listaMascotas = new();
+    private PacienteVeterinarioDto? mascotaSeleccionada;
+    private List<AtencionHistorialDto> historialAtenciones = new();
 
     private string filtroBusquedaPaciente = "";
     private string filtroHistorial = "";
-    private bool mostrarAlertaPdf = false;
+    private int pageNumber = 0;
+    private const int RecordsPerPage = 10;
+    private int totalPacientes = 0;
+    private int TotalPaginas => totalPacientes == 0 ? 1 : (int)Math.Ceiling((double)totalPacientes / RecordsPerPage);
 
-    protected override void OnInitialized()
+    private bool cargandoPacientes = true;
+    private bool cargandoHistorial = false;
+
+    protected override async Task OnInitializedAsync()
     {
-        CargarDatos();
+        await CargarPacientesAsync();
     }
 
-    protected override void OnParametersSet()
+    private async Task CargarPacientesAsync()
     {
-        CargarDatos();
-    }
+        cargandoPacientes = true;
+        var resultado = await MascotaService.ListarPacientesVeterinarioAsync(
+            filtroBusquedaPaciente, pageNumber, RecordsPerPage);
 
-    private void CargarDatos()
-    {
-        // TODO: Conectar con IMascotaService para cargar pacientes reales
-        listaMascotas = new();
+        listaMascotas = resultado.Page;
+        totalPacientes = resultado.TotalCount;
 
         if (MascotaId.HasValue && MascotaId.Value > 0)
         {
-            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == MascotaId.Value);
+            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == MascotaId.Value)
+                ?? listaMascotas.FirstOrDefault();
         }
-        else if (mascotaSeleccionada == null && listaMascotas.Count > 0)
+        else
         {
-            mascotaSeleccionada = listaMascotas.First();
+            mascotaSeleccionada = listaMascotas.FirstOrDefault();
         }
 
-        ActualizarHistorial();
+        cargandoPacientes = false;
+        await ActualizarHistorialAsync();
     }
 
-    private void OnPacienteCambiado(ChangeEventArgs e)
+    private async Task BuscarPacientes()
+    {
+        pageNumber = 0;
+        await CargarPacientesAsync();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (pageNumber > 0)
+        {
+            pageNumber--;
+            await CargarPacientesAsync();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (pageNumber + 1 < TotalPaginas)
+        {
+            pageNumber++;
+            await CargarPacientesAsync();
+        }
+    }
+
+    private async Task OnPacienteCambiado(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == id);
-            ActualizarHistorial();
+            await ActualizarHistorialAsync();
         }
     }
 
-    private void ActualizarHistorial()
+    private async Task ActualizarHistorialAsync()
     {
-        // TODO: Conectar con servicio real de historial médico
-        historialAtenciones = new();
+        if (mascotaSeleccionada == null)
+        {
+            historialAtenciones = new();
+            return;
+        }
+
+        cargandoHistorial = true;
+        historialAtenciones = await MascotaService.ObtenerHistorialVeterinarioAsync(mascotaSeleccionada.MascotaId);
+        cargandoHistorial = false;
     }
 
-    private IEnumerable<Atencion> AtencionesFiltradas
+    private IEnumerable<AtencionHistorialDto> AtencionesFiltradas
     {
         get
         {
             if (string.IsNullOrWhiteSpace(filtroHistorial))
-            {
                 return historialAtenciones;
-            }
 
             var f = filtroHistorial.Trim().ToLower();
             return historialAtenciones.Where(a =>
@@ -351,7 +397,10 @@
 
     private void DescargarReportePdf()
     {
-        mostrarAlertaPdf = true;
+        if (mascotaSeleccionada != null)
+        {
+            var url = MascotaService.ObtenerUrlPdfHistorial(mascotaSeleccionada.MascotaId);
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
     }
 }
-

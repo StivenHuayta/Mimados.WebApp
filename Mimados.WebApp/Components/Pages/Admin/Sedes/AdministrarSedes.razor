@@ -161,7 +161,7 @@
 
         try
         {
-            sedes = await SedeService.ObtenerSedesAsync();
+            sedes = await SedeService.ObtenerSedesConParamatrosAsync(filtroNombre, filtroDireccion);
         }
         catch (Exception)
         {
@@ -174,8 +174,8 @@
     }
 
 
-    private void AplicarFiltros(){
-
+    private async Task AplicarFiltros(){
+        await CargarDatos();
     }
     private async Task LimpiarFiltros(){
         filtroDireccion=String.Empty;

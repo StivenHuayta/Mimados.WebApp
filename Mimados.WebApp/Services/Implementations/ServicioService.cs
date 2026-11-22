@@ -30,11 +30,12 @@ public class ServicioService : IServicioService
         }
     }
 
-    public async Task<List<Servicio>> ObtenerServiciosAsync()
+    public async Task<List<Servicio>> ObtenerServiciosAsync(string nombre, double precioMinimo, double precioMaximo, int duracionMinima, int duracionMaxima)
     {
         try
         {
-            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>($"{PATH}/listarServicios");
+            var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>
+                ($"{PATH}/listarServicios?nombre={nombre}&precioMinimo={precioMinimo}&precioMaximo={precioMaximo}&duracionMinima={duracionMinima}&duracionMaxima={duracionMaxima}");
             return respuesta?.Data ?? new List<Servicio>();
         }
         catch (Exception ex)

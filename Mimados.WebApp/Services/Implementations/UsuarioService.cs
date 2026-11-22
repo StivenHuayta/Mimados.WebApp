@@ -56,4 +56,28 @@ public class UsuarioService : IUsuarioService
             return false;
         }
     }
+
+    public async Task<List<ClienteOpcionDTO>> ListarClientesAsync()
+    {
+        try
+        {
+            var respuesta = await _httpClient.GetFromJsonAsync<
+                ApiResponse<List<ClienteOpcionDTO>>>(
+                    $"{PATH}/clientes");
+
+            if (respuesta?.Success != true)
+            {
+                throw new InvalidOperationException(
+                    respuesta?.Message ?? "No se pudieron obtener los clientes.");
+            }
+
+            return respuesta.Data ?? new List<ClienteOpcionDTO>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar los clientes");
+            throw;
+        }
+    }
+
 }

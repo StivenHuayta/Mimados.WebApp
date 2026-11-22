@@ -182,9 +182,44 @@ namespace Mimados.WebApp.Services.Implementations;
         }
     }
 
+    public async Task<PageResultDto<PacienteVeterinarioDto>> ListarPacientesVeterinarioAsync(
+        string? searchText, int pageNumber, int recordsPerPage)
+    {
+        try
+        {
+            var queryParams = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"recordsPerPage={recordsPerPage}"
+            };
 
+            if (!string.IsNullOrWhiteSpace(searchText))
+                queryParams.Add($"searchText={Uri.EscapeDataString(searchText.Trim())}");
 
+            var url = $"{PATH}/veterinario/pacientes?{string.Join("&", queryParams)}";
+            var resultado = await _httpClient.GetFromJsonAsync<PageResultDto<PacienteVeterinarioDto>>(url);
+            return resultado ?? new PageResultDto<PacienteVeterinarioDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al listar pacientes para veterinario");
+            return new PageResultDto<PacienteVeterinarioDto>();
+        }
+    }
 
-
+    public async Task<List<AtencionHistorialDto>> ObtenerHistorialVeterinarioAsync(int mascotaId)
+    {
+        try
+        {
+            var url = $"{PATH}/veterinario/historial/{mascotaId}";
+            var historial = await _httpClient.GetFromJsonAsync<List<AtencionHistorialDto>>(url);
+            return historial ?? new List<AtencionHistorialDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el historial clínico veterinario de la mascota {Id}", mascotaId);
+            return new List<AtencionHistorialDto>();
+        }
+    }
 }
 

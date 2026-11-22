@@ -6,7 +6,7 @@ namespace Mimados.WebApp.Services.Interfaces
 {
         Task<List<SedeServicioDTO>> ObtenerServiciosPorSedeAsync(int sedeid);
 
-        Task<List<Servicio>> ObtenerServiciosDisponiblesAsync(int sedeid);
+        Task<List<Servicio>> ObtenerServiciosDisponiblesAsync(int sedeid, string textoBusqueda);
 
         Task<bool> CrearSedeServicioAsync(SedeServicio sedeServicio);
 

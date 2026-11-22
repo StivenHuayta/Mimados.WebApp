@@ -1,4 +1,5 @@
 ﻿@page "/horarios"
+@rendermode InteractiveServer
 @using Mimados.WebApp.Models
 @using Mimados.WebApp.Services
 @inject IHorarioLaboralService HorarioService
@@ -48,7 +49,6 @@
                 <div class="row">
                     <div class="col-6 mb-3">
                         <label class="form-label fw-bold">Hora Inicio</label>
-                        <!-- Usamos @bind a variables TimeOnly locales -->
                         <input type="time" class="form-control" @bind="horaInicioLocal" />
                     </div>
                     <div class="col-6 mb-3">
@@ -91,16 +91,22 @@
                             else if (!listaEmpleados.Any())
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center py-3">No hay empleados registrados.</td>
+                                    <td colspan="5" class="text-center py-3">No hay veterinarios registrados.</td>
+                                </tr>
+                            }
+                            else if (!horariosPorEmpleado.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-3 text-muted">No hay horarios asignados todavía.</td>
                                 </tr>
                             }
                             else
                             {
                                 @foreach (var emp in listaEmpleados)
                                 {
-                                    @if (horariosPorEmpleado.ContainsKey(emp.Id.GetValueOrDefault()))
+                                    @if (horariosPorEmpleado.ContainsKey(emp.Id))
                                     {
-                                        @foreach (var hor in horariosPorEmpleado[emp.Id.GetValueOrDefault()])
+                                        @foreach (var hor in horariosPorEmpleado[emp.Id])
                                         {
                                             <tr>
                                                 <td>
@@ -123,7 +129,8 @@
                                                     }
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-danger fw-semibold" @onclick="() => EliminarHorario(hor.Id)">Eliminar</button>
+                                                    <button class="btn btn-sm btn-outline-primary fw-semibold" @onclick="() => AbrirModalEdicion(hor, emp)">Editar</button>
+                                                    <button class="btn btn-sm btn-outline-danger fw-semibold ms-1" @onclick="() => AbrirModalEliminar(hor, emp)">Eliminar</button>
                                                 </td>
                                             </tr>
                                         }
@@ -138,18 +145,103 @@
     </div>
 </div>
 
+<!-- Modal de Edición -->
+@if (mostrarModal && horarioEditando != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Editar Horario: @nombreVeterinarioEditando</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Día de la semana</label>
+                        <select class="form-select" @bind="horarioEditando.DiaSemana">
+                            <option value="LUNES">Lunes</option>
+                            <option value="MARTES">Martes</option>
+                            <option value="MIERCOLES">Miércoles</option>
+                            <option value="JUEVES">Jueves</option>
+                            <option value="VIERNES">Viernes</option>
+                            <option value="SABADO">Sábado</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Hora Inicio</label>
+                            <input type="time" class="form-control" @bind="horaInicioEdicion" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Hora Fin</label>
+                            <input type="time" class="form-control" @bind="horaFinEdicion" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CerrarModal" disabled="@cargando">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-bold" @onclick="GuardarEdicion" disabled="@cargando">
+                        @(cargando ? "Guardando..." : "Guardar Cambios")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de Confirmación de Eliminación -->
+@if (mostrarModalEliminar && horarioAEliminar != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalEliminar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">¿Estás seguro de que deseas eliminar este horario?</p>
+                    <div class="p-3 bg-light rounded border">
+                        <div><strong>Veterinario:</strong> @nombreVeterinarioEliminar</div>
+                        <div><strong>Día:</strong> @horarioAEliminar.DiaSemana</div>
+                        <div><strong>Turno:</strong> @horarioAEliminar.HoraInicio - @horarioAEliminar.HoraFin</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CerrarModalEliminar" disabled="@cargando">Cancelar</button>
+                    <button type="button" class="btn btn-danger fw-bold" @onclick="ConfirmarEliminarHorario" disabled="@cargando">
+                        @(cargando ? "Eliminando..." : "Sí, eliminar")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    private HorarioRequest nuevoHorario = new HorarioRequest { DiaSemana = "LUNES" };
-    
-    // Variables locales TimeOnly para el binding del HTML
+    private HorarioLaboral nuevoHorario = new HorarioLaboral { DiaSemana = "LUNES", Activo = true };
+
     private TimeOnly horaInicioLocal = new TimeOnly(8, 0);
     private TimeOnly horaFinLocal = new TimeOnly(14, 0);
 
-    private List<EmpleadoRequest>? listaEmpleados;
-    private Dictionary<int, List<HorarioRequest>> horariosPorEmpleado = new Dictionary<int, List<HorarioRequest>>();
-    
+    private List<Empleado>? listaEmpleados;
+    private Dictionary<int, List<HorarioLaboral>> horariosPorEmpleado = new();
+
     private string? mensajeAlerta;
     private bool cargando = false;
+
+    // Variables para el modal de edición
+    private bool mostrarModal = false;
+    private HorarioLaboral? horarioEditando;
+    private string nombreVeterinarioEditando = string.Empty;
+    private TimeOnly horaInicioEdicion;
+    private TimeOnly horaFinEdicion;
+    private string estadoEdicion = "true";
+
+    // Variables para el modal de eliminación
+    private bool mostrarModalEliminar = false;
+    private HorarioLaboral? horarioAEliminar;
+    private string nombreVeterinarioEliminar = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,21 +252,19 @@
     {
         try
         {
-            var respuestaEmp = await EmpleadoService.ListarEmpleadosAsync();
-            if (respuestaEmp != null && respuestaEmp.Success && respuestaEmp.Data != null)
-            {
-                listaEmpleados = respuestaEmp.Data;
-                horariosPorEmpleado.Clear();
+            var todosLosEmpleados = await EmpleadoService.ListarEmpleadosAsync();
+            listaEmpleados = todosLosEmpleados.Where(e => !e.EsAdmin).ToList();
 
-                foreach (var emp in listaEmpleados)
+            horariosPorEmpleado.Clear();
+
+            foreach (var emp in listaEmpleados)
+            {
+                if (emp.Id > 0)
                 {
-                    if (emp.Id.HasValue)
+                    var horarios = await HorarioService.ListarPorEmpleadoAsync(emp.Id);
+                    if (horarios.Any())
                     {
-                        var respuestaHor = await HorarioService.ListarPorEmpleadoAsync(emp.Id.Value);
-                        if (respuestaHor != null && respuestaHor.Success && respuestaHor.Data != null)
-                        {
-                            horariosPorEmpleado[emp.Id.Value] = respuestaHor.Data;
-                        }
+                        horariosPorEmpleado[emp.Id] = horarios;
                     }
                 }
             }
@@ -182,6 +272,7 @@
         catch (Exception)
         {
             mensajeAlerta = "No se pudieron cargar los horarios en este momento.";
+            listaEmpleados = new List<Empleado>();
         }
     }
 
@@ -189,31 +280,44 @@
     {
         if (nuevoHorario.EmpleadoId == 0)
         {
-            mensajeAlerta = "Debe seleccionar un empleado.";
+            mensajeAlerta = "Debe seleccionar un veterinario.";
+            return;
+        }
+
+        if (horaFinLocal <= horaInicioLocal)
+        {
+            mensajeAlerta = "La hora de fin debe ser posterior a la hora de inicio.";
             return;
         }
 
         cargando = true;
         mensajeAlerta = null;
 
-        // Convertimos las variables TimeOnly a string con formato "HH:mm:ss" antes de enviar
-        nuevoHorario.HoraInicio = horaInicioLocal.ToString("HH:mm:ss");
-        nuevoHorario.HoraFin = horaFinLocal.ToString("HH:mm:ss");
+        nuevoHorario.HoraInicio = horaInicioLocal.ToString("HH:mm");
+        nuevoHorario.HoraFin = horaFinLocal.ToString("HH:mm");
+        nuevoHorario.Activo = true;
 
         try
         {
-            var respuesta = await HorarioService.RegistrarHorarioAsync(nuevoHorario);
-            if (respuesta != null && respuesta.Success)
+            bool exito = await HorarioService.RegistrarHorarioAsync(nuevoHorario);
+            if (exito)
             {
-                await CargarDatosGenerales();
-                // Reiniciamos valores visuales
+                int empSeleccionado = nuevoHorario.EmpleadoId;
+                nuevoHorario = new HorarioLaboral
+                {
+                    EmpleadoId = empSeleccionado,
+                    DiaSemana = "LUNES",
+                    Activo = true
+                };
                 horaInicioLocal = new TimeOnly(8, 0);
                 horaFinLocal = new TimeOnly(14, 0);
+
+                await CargarDatosGenerales();
                 mensajeAlerta = "Horario asignado exitosamente.";
             }
             else
             {
-                mensajeAlerta = respuesta?.Message ?? "Error al registrar el horario.";
+                mensajeAlerta = "Error al registrar el horario. Verifica que no se cruce con otro turno ni exceda el horario de la sede.";
             }
         }
         catch (Exception)
@@ -226,27 +330,110 @@
         }
     }
 
-    private async Task EliminarHorario(int? idHorario)
+    private void AbrirModalEdicion(HorarioLaboral hor, Empleado emp)
     {
-        if (idHorario.HasValue)
+        horarioEditando = new HorarioLaboral
         {
-            try
+            Id = hor.Id,
+            EmpleadoId = emp.Id,
+            DiaSemana = hor.DiaSemana,
+            Activo = hor.Activo
+        };
+        nombreVeterinarioEditando = $"{emp.Nombres} {emp.Apellidos}";
+        TimeOnly.TryParse(hor.HoraInicio, out horaInicioEdicion);
+        TimeOnly.TryParse(hor.HoraFin, out horaFinEdicion);
+        estadoEdicion = hor.Activo ? "true" : "false";
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+        horarioEditando = null;
+    }
+
+    private async Task GuardarEdicion()
+    {
+        if (horarioEditando == null) return;
+
+        if (horaFinEdicion <= horaInicioEdicion)
+        {
+            mensajeAlerta = "La hora de fin debe ser posterior a la hora de inicio.";
+            return;
+        }
+
+        cargando = true;
+        mensajeAlerta = null;
+
+        horarioEditando.HoraInicio = horaInicioEdicion.ToString("HH:mm");
+        horarioEditando.HoraFin = horaFinEdicion.ToString("HH:mm");
+        horarioEditando.Activo = (estadoEdicion == "true");
+
+        try
+        {
+            bool exito = await HorarioService.ModificarHorarioAsync(horarioEditando);
+            if (exito)
             {
-                var respuesta = await HorarioService.EliminarHorarioAsync(idHorario.Value);
-                if (respuesta != null && respuesta.Success)
-                {
-                    await CargarDatosGenerales();
-                    mensajeAlerta = "Horario eliminado correctamente.";
-                }
-                else
-                {
-                    mensajeAlerta = respuesta?.Message ?? "No se pudo eliminar el horario.";
-                }
+                CerrarModal();
+                await CargarDatosGenerales();
+                mensajeAlerta = "Horario modificado correctamente.";
             }
-            catch (Exception)
+            else
             {
-                mensajeAlerta = "Error al intentar eliminar el horario.";
+                mensajeAlerta = "No se pudo modificar el horario.";
             }
+        }
+        catch (Exception)
+        {
+            mensajeAlerta = "Error de conexión al intentar modificar el horario.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirModalEliminar(HorarioLaboral hor, Empleado emp)
+    {
+        horarioAEliminar = hor;
+        nombreVeterinarioEliminar = $"Dr/a. {emp.Nombres} {emp.Apellidos}";
+        mostrarModalEliminar = true;
+    }
+
+    private void CerrarModalEliminar()
+    {
+        mostrarModalEliminar = false;
+        horarioAEliminar = null;
+    }
+
+    private async Task ConfirmarEliminarHorario()
+    {
+        if (horarioAEliminar == null || horarioAEliminar.Id <= 0) return;
+
+        cargando = true;
+        mensajeAlerta = null;
+
+        try
+        {
+            bool exito = await HorarioService.EliminarHorarioAsync(horarioAEliminar.Id);
+            if (exito)
+            {
+                CerrarModalEliminar();
+                await CargarDatosGenerales();
+                mensajeAlerta = "Horario eliminado correctamente.";
+            }
+            else
+            {
+                mensajeAlerta = "No se pudo eliminar el horario.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeAlerta = "Error al intentar eliminar el horario.";
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 }

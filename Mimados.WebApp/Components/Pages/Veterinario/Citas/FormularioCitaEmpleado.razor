@@ -2,6 +2,14 @@
 @page "/empleado/citas/editar/{Id:int}"
 @rendermode InteractiveServer
 
+@inject IUsuarioService UsuarioService
+@inject IMascotaService MascotaService
+@inject ISedeService SedeService
+@inject ISedeServicioService SedeServicioService
+@inject IVeterinarioService VeterinarioService
+@inject IDisponibilidadService DisponibilidadService
+@inject ICitaService CitaService
+
 <PageTitle>Formulario de Cita - Personal - Mimados</PageTitle>
 
 <div class="container mt-4" style="max-width: 920px;">
@@ -10,12 +18,26 @@
             <h2 class="mb-1">@(EsEdicion ? $"Modificar Cita {Codigo}" : "Registrar Nueva Cita")</h2>
             <p class="text-muted mb-0">@(EsEdicion ? "Actualiza los datos de la cita seleccionada." : "Completa la información de la cita.")</p>
         </div>
-        <a class="btn btn-secondary" href="/empleado/citas"><i class="bi bi-arrow-left me-1"></i> Volver al listado</a>
+        <a class="btn btn-secondary" href="/empleado/citas">
+            <i class="bi bi-arrow-left me-1"></i> Volver al listado
+        </a>
     </div>
 
-    @if (CitaNoEncontrada)
+    @if (cargandoPagina)
+    {
+        <div class="alert alert-info">Cargando información del formulario...</div>
+    }
+    else if (CitaNoEncontrada)
     {
         <div class="alert alert-warning" role="alert">No se encontró la cita solicitada.</div>
+    }
+    else if (EdicionBloqueada)
+    {
+        <div class="alert alert-warning" role="alert">
+            La cita @Codigo se encuentra en estado <strong>@estado</strong>.
+            Solo se pueden modificar citas pendientes o confirmadas.
+        </div>
+        <a class="btn btn-outline-secondary" href="/empleado/citas">Volver al listado</a>
     }
     else
     {
@@ -30,68 +52,217 @@
                     <span class="badge @(estado == "Confirmada" ? "badge-mimados-solid" : estado == "Pendiente" ? "badge-mimados-primary" : "badge-mimados-neutral")">@estado</span>
                 }
             </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorCarga))
+            {
+                <div class="alert alert-danger" role="alert">@errorCarga</div>
+            }
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-cliente">Cliente:</label>
-                    <select class="form-select" id="emp-form-cliente" @bind="cliente">
-                        <option value="">-- Seleccione --</option>
+                    <select class="form-select" id="emp-form-cliente"
+                            @bind="cliente" @bind:after="ClienteCambiadoAsync"
+                            disabled="@(cargandoClientes || EsEdicion)">
+                        <option value="0">-- Seleccione un cliente --</option>
+                        @foreach (var c in clientes)
+                        {
+                            <option value="@c.Id">@c.Nombre</option>
+                        }
                     </select>
+                    @if (cargandoClientes)
+                    {
+                        <small class="text-muted">Cargando clientes...</small>
+                    }
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-mascota">Mascota:</label>
-                    <select class="form-select" id="emp-form-mascota" @bind="mascota">
-                        <option value="">-- Seleccione --</option>
+                    <select class="form-select" id="emp-form-mascota" @bind="mascota"
+                            disabled="@(cliente <= 0 || cargandoMascotas || EsEdicion)">
+                        <option value="0">-- Seleccione una mascota --</option>
+                        @foreach (var m in mascotasCliente)
+                        {
+                            <option value="@m.MascotaId">@m.Nombre</option>
+                        }
                     </select>
+                    @if (cargandoMascotas)
+                    {
+                        <small class="text-muted">Cargando mascotas...</small>
+                    }
+                    else if (cliente > 0 && mascotasCliente.Count == 0)
+                    {
+                        <small class="text-muted">Este cliente no tiene mascotas activas.</small>
+                    }
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-sede">Sede:</label>
-                    <select class="form-select" id="emp-form-sede" @bind="sede">
-                        <option value="">-- Seleccione --</option>
+                    <select class="form-select" id="emp-form-sede"
+                            @bind="sede" @bind:after="SedeCambiadaAsync" disabled="@EsEdicion">
+                        <option value="0">-- Seleccione una sede --</option>
+                        @foreach (var s in sedes)
+                        {
+                            <option value="@s.Id">@s.Nombre</option>
+                        }
                     </select>
+                    @if (sedes.Count == 0)
+                    {
+                        <small class="text-muted">No hay sedes disponibles.</small>
+                    }
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-servicio">Servicio:</label>
-                    <select class="form-select" id="emp-form-servicio" @bind="servicio">
-                        <option value="">-- Seleccione --</option>
-                    </select>
+                    @if (EsEdicion)
+                    {
+                        <input id="emp-form-servicio" class="form-control"
+                               value="@nombreServicioActual" disabled />
+                        <small class="text-muted">Duración actual: @duracionOriginalMinutos minutos. El servicio no se cambia aquí.</small>
+                    }
+                    else
+                    {
+                        <select class="form-select" id="emp-form-servicio"
+                                @bind="servicio" @bind:after="ServicioCambiado"
+                                disabled="@(sede <= 0 || cargandoServicios)">
+                            <option value="0">-- Seleccione un servicio --</option>
+                            @foreach (var s in serviciosSede)
+                            {
+                                <option value="@s.IdSedeServicio">@s.Nombre</option>
+                            }
+                        </select>
+                        @if (cargandoServicios)
+                        {
+                            <small class="text-muted">Cargando servicios de esta sede...</small>
+                        }
+                        else if (sede > 0 && serviciosSede.Count == 0)
+                        {
+                            <small class="text-muted">No hay servicios activos para esta sede.</small>
+                        }
+                        else if (servicio > 0)
+                        {
+                            <small class="text-muted">Duración del servicio: @DuracionMinutos minutos.</small>
+                        }
+                    }
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-medico">Veterinario:</label>
-                    <select class="form-select" id="emp-form-medico" @bind="veterinario">
-                        <option value="">-- Seleccione --</option>
+                    <select class="form-select" id="emp-form-medico"
+                            @bind="veterinario" @bind:after="VeterinarioCambiado"
+                            disabled="@(sede <= 0)">
+                        <option value="0">-- Seleccione un veterinario --</option>
+                        @foreach (var v in VeterinariosDeSede)
+                        {
+                            <option value="@v.EmpleadoId">@v.Nombre</option>
+                        }
                     </select>
+                    @if (sede > 0 && VeterinariosDeSede.Count == 0)
+                    {
+                        <small class="text-muted">No hay veterinarios asignados a esta sede.</small>
+                    }
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-estado">Estado:</label>
-                    <select class="form-select" id="emp-form-estado" @bind="estado">
+                    <select class="form-select" id="emp-form-estado" @bind="estado" disabled>
                         <option value="Pendiente">Pendiente</option>
                         <option value="Confirmada">Confirmada</option>
                         <option value="Cancelada">Cancelada</option>
+                        <option value="Atendida">Atendida</option>
                     </select>
+                    <small class="text-muted">@(EsEdicion ? "El estado no se modifica desde este formulario." : "Las citas nuevas se registran como programadas.")</small>
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold" for="emp-form-fecha">Fecha de la cita:</label>
-                    <input type="date" class="form-control" id="emp-form-fecha" @bind="fecha" />
+                    <input type="date" class="form-control" id="emp-form-fecha"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           @bind="fecha" @bind:after="LimpiarHorarios" />
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold" for="emp-form-hora">Hora:</label>
-                    <input type="time" class="form-control" id="emp-form-hora" @bind="hora" />
+
+                @* Igual que en NuevaCita.razor del cliente: hora de 0 a 23 y minutos de 5 en 5. *@
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-hora">Hora (24 h):</label>
+                    <select class="form-select" id="emp-form-hora" @bind="Hora24">
+                        @for (int i = 0; i < 24; i++)
+                        {
+                            <option value="@i">@($"{i:00}")</option>
+                        }
+                    </select>
                 </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-minutos">Minutos:</label>
+                    <select class="form-select" id="emp-form-minutos" @bind="Minuto">
+                        @for (int i = 0; i < 60; i += 5)
+                        {
+                            <option value="@i">@($"{i:00}")</option>
+                        }
+                    </select>
+                    <small class="text-muted">
+                        Hora seleccionada: @(hora?.ToString("HH:mm") ?? "--:--")
+                    </small>
+                </div>
+
                 <div class="col-12 mb-3">
-                    <label class="form-label fw-bold" for="emp-form-notas">Observaciones (opcional):</label>
-                    <textarea class="form-control" id="emp-form-notas" rows="3" placeholder="Información complementaria" @bind="observaciones"></textarea>
+                    <button class="btn btn-outline-primary btn-sm" type="button"
+                            disabled="@consultandoHorarios"
+                            @onclick="ConsultarHorariosAsync">
+                        <i class="bi bi-search me-1"></i>
+                        @(consultandoHorarios ? "Consultando..." : "Consultar horarios disponibles")
+                    </button>
+                    @if (horariosConsultados)
+                    {
+                        <div class="mt-3">
+                            @if (horariosDisponibles.Count == 0)
+                            {
+                                <div class="alert alert-info mb-0">
+                                    No hay horarios libres para este veterinario en la fecha y duración seleccionadas. Prueba otra fecha o veterinario.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mb-2 fw-bold">Selecciona un horario disponible:</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var disponible in horariosDisponibles)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm @(EsHorarioSeleccionado(disponible) ? "btn-primary" : "btn-outline-primary")"
+                                                @onclick="() => SeleccionarHorario(disponible)">
+                                            @MostrarHorario(disponible)
+                                        </button>
+                                    }
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Al pulsar una hora se rellenan automáticamente los selectores de hora y minutos.
+                                </small>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label fw-bold" for="emp-form-notas">Motivo de la cita:</label>
+                    <textarea class="form-control" id="emp-form-notas" rows="3"
+                              maxlength="255" placeholder="Motivo de la visita"
+                              @bind="observaciones"></textarea>
                 </div>
             </div>
+
             <div class="d-flex justify-content-end gap-2 flex-wrap">
                 <a href="/empleado/citas" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="button" class="btn btn-primary fw-bold px-4" @onclick="GuardarCita">
-                    <i class="bi bi-save me-1"></i> @(EsEdicion ? "Guardar Cambios" : "Registrar Cita")
+                <button type="button" class="btn btn-primary fw-bold px-4"
+                        @onclick="GuardarCitaAsync" disabled="@guardando">
+                    <i class="bi bi-save me-1"></i>
+                    @(guardando ? "Guardando..." : EsEdicion ? "Guardar Cambios" : "Registrar Cita")
                 </button>
             </div>
+
             @if (citaGuardada)
             {
                 <div class="alert alert-success mt-3 mb-0" role="status">
-                    @(EsEdicion ? "Cita actualizada correctamente." : "Cita registrada correctamente.")
+                    @(EsEdicion ? "Cita actualizada correctamente." : "Cita y servicio registrados correctamente.")
                     <a class="alert-link" href="/empleado/citas">Ver el listado</a>
                 </div>
             }
@@ -103,33 +274,447 @@
     [Parameter] public int? Id { get; set; }
 
     private bool EsEdicion => Id.HasValue;
-    private bool CitaNoEncontrada => false;
+    private bool EdicionBloqueada => EsEdicion && estado != "Pendiente" && estado != "Confirmada";
+    private bool CitaNoEncontrada;
     private string Codigo => $"C-{Id.GetValueOrDefault():000}";
-    private bool citaGuardada;
 
-    private string cliente = "";
-    private string mascota = "";
-    private string sede = "";
-    private string servicio = "";
-    private string veterinario = "";
+    private int cliente;
+    private int mascota;
+    private int sede;
+    private int servicio;
+    private int veterinario;
     private string estado = "Pendiente";
     private DateTime? fecha;
     private TimeOnly? hora;
     private string observaciones = "";
+    private int duracionOriginalMinutos = 30;
+    private int veterinarioOriginal;
+    private DateTime fechaInicioOriginal;
+    private string nombreServicioActual = "Sin servicio asociado";
 
-    protected override void OnParametersSet()
+    private List<ClienteOpcionDTO> clientes = new();
+    private List<Mascota> mascotasCliente = new();
+    private List<Sede> sedes = new();
+    private List<SedeServicioDTO> serviciosSede = new();
+    private List<VeterinarioResumenDto> veterinarios = new();
+    private List<string> horariosDisponibles = new();
+
+    private bool cargandoPagina = true;
+    private bool cargandoClientes;
+    private bool cargandoMascotas;
+    private bool cargandoServicios;
+    private bool consultandoHorarios;
+    private bool horariosConsultados;
+    private bool guardando;
+    private bool citaGuardada;
+    private string? errorCarga;
+
+    // El listado de veterinarios contiene SedeId: se filtra sin hacer otra petición.
+    private List<VeterinarioResumenDto> VeterinariosDeSede =>
+        veterinarios.Where(v => v.SedeId == sede).ToList();
+
+    // Tomamos la duración del servicio elegido; de no existir, usamos los 30 min del RF-03.
+    private int DuracionMinutos =>
+        serviciosSede.FirstOrDefault(s => s.IdSedeServicio == servicio)?.DuracionMinutos is int d && d > 0
+            ? d : 30;
+
+    private int DuracionCita => EsEdicion ? duracionOriginalMinutos : DuracionMinutos;
+
+    protected override async Task OnParametersSetAsync()
     {
+        cargandoPagina = true;
+        CitaNoEncontrada = false;
+        errorCarga = null;
         citaGuardada = false;
-        cliente = "";
-        mascota = "";
-        sede = "";
-        servicio = "";
-        veterinario = "";
+        cliente = 0;
+        mascota = 0;
+        sede = 0;
+        servicio = 0;
+        veterinario = 0;
         estado = "Pendiente";
-        fecha = null;
-        hora = null;
+        fecha = DateTime.Today.AddDays(1);
+        hora = new TimeOnly(10, 0);
         observaciones = "";
+        duracionOriginalMinutos = 30;
+        veterinarioOriginal = 0;
+        fechaInicioOriginal = default;
+        nombreServicioActual = "Sin servicio asociado";
+        mascotasCliente.Clear();
+        serviciosSede.Clear();
+        LimpiarHorarios();
+
+        try
+        {
+            cargandoClientes = true;
+            clientes = await UsuarioService.ListarClientesAsync();
+            sedes = (await SedeService.ObtenerSedesAsync()).Where(s => s.Activo).ToList();
+            veterinarios = await VeterinarioService.ListarAsync();
+
+            if (EsEdicion)
+            {
+                await CargarCitaEnEdicionAsync();
+            }
+        }
+        catch (Exception)
+        {
+            errorCarga = "No se pudieron cargar los datos del formulario. Comprueba que Java esté ejecutándose.";
+        }
+        finally
+        {
+            cargandoClientes = false;
+            cargandoPagina = false;
+        }
     }
 
-    private void GuardarCita() => citaGuardada = true;
+    private async Task CargarCitaEnEdicionAsync()
+    {
+        var cita = await CitaService.ObtenerPorIdAsync(Id!.Value);
+        if (cita == null)
+        {
+            CitaNoEncontrada = true;
+            return;
+        }
+
+        var mascotaActual = await MascotaService.ObtenerMascotaPorIdAsync(cita.MascotaId);
+        if (mascotaActual == null)
+        {
+            errorCarga = "La mascota de esta cita no pudo recuperarse.";
+        }
+        else
+        {
+            cliente = mascotaActual.ClienteId;
+            await CargarMascotasDeClienteAsync();
+            mascota = cita.MascotaId;
+        }
+
+        veterinario = cita.EmpleadoId;
+        sede = veterinarios.FirstOrDefault(v => v.EmpleadoId == veterinario)?.SedeId ?? 0;
+        await CargarServiciosDeSedeAsync();
+        // El servicio se muestra como dato de lectura y no se cambia con el PUT actual.
+        servicio = 0;
+        try
+        {
+            var listado = await CitaService.ListarTodasAsync();
+            nombreServicioActual = listado.FirstOrDefault(c => c.Id == Id!.Value)?.NombreServicio
+                ?? "Sin servicio asociado";
+        }
+        catch (Exception)
+        {
+            nombreServicioActual = "No disponible";
+        }
+
+        duracionOriginalMinutos = (int)(cita.FechaHoraFin - cita.FechaHoraInicio).TotalMinutes;
+        if (duracionOriginalMinutos <= 0)
+        {
+            errorCarga = "La cita no tiene una duración válida.";
+            return;
+        }
+        veterinarioOriginal = cita.EmpleadoId;
+        fechaInicioOriginal = cita.FechaHoraInicio;
+
+        fecha = cita.FechaHoraInicio.Date;
+        hora = TimeOnly.FromDateTime(cita.FechaHoraInicio);
+        observaciones = cita.Motivo ?? "";
+        estado = cita.Estado?.ToUpperInvariant() switch
+        {
+            "PROGRAMADA" => "Pendiente",
+            "CONFIRMADA" => "Confirmada",
+            "CANCELADA" => "Cancelada",
+            "ATENDIDA" => "Atendida",
+            _ => "Pendiente"
+        };
+    }
+
+    private async Task ClienteCambiadoAsync()
+    {
+        mascota = 0;
+        await CargarMascotasDeClienteAsync();
+    }
+
+    private async Task CargarMascotasDeClienteAsync()
+    {
+        mascotasCliente.Clear();
+        if (cliente <= 0) return;
+        cargandoMascotas = true;
+        try
+        {
+            mascotasCliente = (await MascotaService.ObtenerMascotasPorClienteAsync(cliente))
+                .Where(m => m.Activo).ToList();
+        }
+        catch (Exception)
+        {
+            errorCarga = "No se pudieron cargar las mascotas del cliente.";
+        }
+        finally
+        {
+            cargandoMascotas = false;
+        }
+    }
+
+    private async Task SedeCambiadaAsync()
+    {
+        servicio = 0;
+        veterinario = 0;
+        LimpiarHorarios();
+        await CargarServiciosDeSedeAsync();
+    }
+
+    private async Task CargarServiciosDeSedeAsync()
+    {
+        serviciosSede.Clear();
+        if (sede <= 0) return;
+
+        cargandoServicios = true;
+        try
+        {
+            serviciosSede = (await SedeServicioService.ObtenerServiciosPorSedeAsync(sede))
+                .Where(s => s.Activo).ToList();
+        }
+        catch (Exception)
+        {
+            errorCarga = "No se pudieron cargar los servicios de la sede.";
+        }
+        finally
+        {
+            cargandoServicios = false;
+        }
+    }
+
+    private void ServicioCambiado()
+    {
+        LimpiarHorarios();
+    }
+
+    private void VeterinarioCambiado()
+    {
+        LimpiarHorarios();
+    }
+
+    // Misma selección de horas y minutos que usa NuevaCita.razor del cliente.
+    private int Hora24
+    {
+        get => hora?.Hour ?? 10;
+        set => hora = new TimeOnly(value, hora?.Minute ?? 0);
+    }
+
+    private int Minuto
+    {
+        get => hora?.Minute ?? 0;
+        set => hora = new TimeOnly(hora?.Hour ?? 10, value);
+    }
+
+    private void LimpiarHorarios()
+    {
+        horariosConsultados = false;
+        horariosDisponibles.Clear();
+    }
+
+    private static string MostrarHorario(string texto)
+    {
+        return TimeOnly.TryParse(texto, out var valor)
+            ? valor.ToString("HH:mm") : texto;
+    }
+
+    private bool EsHorarioSeleccionado(string texto)
+    {
+        return hora.HasValue &&
+            TimeOnly.TryParse(texto, out var valor) &&
+            hora.Value.Hour == valor.Hour && hora.Value.Minute == valor.Minute;
+    }
+
+    private void SeleccionarHorario(string texto)
+    {
+        if (TimeOnly.TryParse(texto, out var seleccion))
+        {
+            hora = new TimeOnly(seleccion.Hour, seleccion.Minute);
+        }
+    }
+
+    private async Task ConsultarHorariosAsync()
+    {
+        if (consultandoHorarios) return;
+
+        errorCarga = null;
+        LimpiarHorarios();
+
+        if (sede <= 0 || (!EsEdicion && servicio <= 0) || veterinario <= 0 || !fecha.HasValue)
+        {
+            errorCarga = "Antes de consultar, selecciona sede, veterinario, fecha y (para una cita nueva) servicio.";
+            return;
+        }
+
+        if (!VeterinariosDeSede.Any(v => v.EmpleadoId == veterinario))
+        {
+            errorCarga = "El veterinario seleccionado no pertenece a la sede elegida.";
+            return;
+        }
+
+        if (fecha.Value.Date < DateTime.Today)
+        {
+            errorCarga = "Selecciona una fecha de hoy o posterior.";
+            return;
+        }
+
+        consultandoHorarios = true;
+        try
+        {
+            // Usa el mismo endpoint que la pantalla de disponibilidad del cliente.
+            // La duración es la del servicio nuevo o la de la cita existente.
+            horariosDisponibles = (await DisponibilidadService.ConsultarAsync(
+                veterinario, fecha.Value, DuracionCita))
+                .Where(h => TimeOnly.TryParse(h, out _))
+                .Distinct()
+                .OrderBy(h => TimeOnly.Parse(h))
+                .ToList();
+
+            // La cita en edición ocupa su horario original. Se muestra como opción válida.
+            if (EsEdicion && veterinario == veterinarioOriginal &&
+                fecha.Value.Date == fechaInicioOriginal.Date)
+            {
+                string horaActual = fechaInicioOriginal.ToString("HH:mm");
+                if (!horariosDisponibles.Contains(horaActual))
+                {
+                    horariosDisponibles.Add(horaActual);
+                    horariosDisponibles = horariosDisponibles.OrderBy(h => TimeOnly.Parse(h)).ToList();
+                }
+            }
+            horariosConsultados = true;
+        }
+        catch (Exception ex)
+        {
+            // Mostrar la causa devuelta por el servicio para diagnosticar problemas en la consulta.
+            errorCarga = $"No se pudo consultar la disponibilidad: {ex.Message}";
+        }
+        finally
+        {
+            consultandoHorarios = false;
+        }
+    }
+
+    // Crea una cita con su servicio o modifica los datos básicos de una existente.
+    private async Task GuardarCitaAsync()
+    {
+        if (guardando) return;
+
+        errorCarga = null;
+        citaGuardada = false;
+
+        if (cliente <= 0 || mascota <= 0 || sede <= 0 || veterinario <= 0 ||
+            (!EsEdicion && servicio <= 0))
+        {
+            errorCarga = "Completa los datos obligatorios de la cita.";
+            return;
+        }
+
+        if (EsEdicion && estado != "Pendiente" && estado != "Confirmada")
+        {
+            errorCarga = "Solo se pueden modificar citas pendientes o confirmadas.";
+            return;
+        }
+
+        if (!mascotasCliente.Any(m => m.MascotaId == mascota))
+        {
+            errorCarga = "La mascota seleccionada no pertenece al cliente elegido.";
+            return;
+        }
+
+        if (!VeterinariosDeSede.Any(v => v.EmpleadoId == veterinario))
+        {
+            errorCarga = "El veterinario no corresponde a la sede elegida.";
+            return;
+        }
+
+        if (!fecha.HasValue || !hora.HasValue)
+        {
+            errorCarga = "Selecciona la fecha y un horario disponible.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(observaciones))
+        {
+            errorCarga = "Ingresa el motivo de la cita.";
+            return;
+        }
+
+        var fechaInicio = fecha.Value.Date.Add(hora.Value.ToTimeSpan());
+        if (fechaInicio <= DateTime.Now)
+        {
+            errorCarga = "La fecha y hora deben ser futuras.";
+            return;
+        }
+
+        if (DuracionCita <= 0)
+        {
+            errorCarga = "La duración de la cita no es válida.";
+            return;
+        }
+
+        var fechaFin = fechaInicio.AddMinutes(DuracionCita);
+        bool conservaHorario = EsEdicion &&
+            veterinario == veterinarioOriginal && fechaInicio == fechaInicioOriginal;
+        guardando = true;
+
+        try
+        {
+            // Si se mantiene el mismo veterinario y horario, la propia cita lo ocupa.
+            // En los demás casos se comprueba disponibilidad antes de guardar.
+            if (!conservaHorario)
+            {
+                var libres = await DisponibilidadService.ConsultarAsync(
+                    veterinario, fecha.Value, DuracionCita);
+
+                bool disponible = libres.Any(h =>
+                    TimeOnly.TryParse(h, out var hLibre) && hLibre == hora.Value);
+
+                if (!disponible)
+                {
+                    errorCarga = "El horario no está disponible. Vuelve a consultar los horarios.";
+                    LimpiarHorarios();
+                    return;
+                }
+            }
+
+            var nuevaCita = new Cita
+            {
+                EmpleadoId = veterinario,
+                MascotaId = mascota,
+                FechaHoraInicio = fechaInicio,
+                FechaHoraFin = fechaFin,
+                Motivo = observaciones.Trim()
+            };
+
+            if (EsEdicion)
+            {
+                nuevaCita.CitaId = Id!.Value;
+                bool modificada = await CitaService.ModificarAsync(nuevaCita);
+                if (modificada)
+                {
+                    citaGuardada = true;
+                    veterinarioOriginal = veterinario;
+                    fechaInicioOriginal = fechaInicio;
+                }
+                else
+                {
+                    errorCarga = "No se pudo modificar la cita.";
+                }
+            }
+            else
+            {
+                bool registrada = await CitaService.RegistrarEmpleadoAsync(
+                    nuevaCita, sede, servicio);
+                if (registrada)
+                    citaGuardada = true;
+                else
+                    errorCarga = "No se pudo registrar la cita.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorCarga = $"No se pudo guardar la cita: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
 }

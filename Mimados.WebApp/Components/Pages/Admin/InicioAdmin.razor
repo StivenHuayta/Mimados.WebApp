@@ -1,5 +1,7 @@
 @page "/admin/inicio"
 @rendermode InteractiveServer
+@using Mimados.WebApp.Services
+@inject IEmpleadoService EmpleadoService
 
 <AuthorizeView Roles="Admin, Administrador">
     <Authorized Context="auth">
@@ -16,7 +18,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <p class="text-muted small text-uppercase fw-semibold mb-1">Personal</p>
-                                <h3 class="fw-bold mb-0 text-dark">12</h3>
+                                <h3 class="fw-bold mb-0 text-dark">@cantidadEmpleados</h3>
                                 <p class="mb-0 text-secondary">Empleados</p>
                             </div>
                             <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 56px; height: 56px;">
@@ -85,3 +87,12 @@
     </NotAuthorized>
 </AuthorizeView>
 
+@code {
+    private string cantidadEmpleados = "...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var empleados = await EmpleadoService.ListarEmpleadosAsync();
+        cantidadEmpleados = empleados.Count.ToString();
+    }
+}

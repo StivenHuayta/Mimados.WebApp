@@ -30,6 +30,7 @@ builder.Services.AddHttpClient<IAuthValidationService, AuthValidationService>(Co
 builder.Services.AddHttpClient<IEmpleadoService, EmpleadoService>(ConfigureClient);
 builder.Services.AddHttpClient<IHorarioLaboralService, HorarioLaboralService>(ConfigureClient);
 builder.Services.AddHttpClient<ICitaService, CitaService>(ConfigureClient);
+builder.Services.AddHttpClient<IAtencionService, AtencionService>(ConfigureClient);
 builder.Services.AddHttpClient<IDisponibilidadService, DisponibilidadService>(ConfigureClient);
 builder.Services.AddHttpClient<IVeterinarioService, VeterinarioService>(ConfigureClient);
 builder.Services.AddHttpClient<IMascotaService, MascotaService>(ConfigureClient);

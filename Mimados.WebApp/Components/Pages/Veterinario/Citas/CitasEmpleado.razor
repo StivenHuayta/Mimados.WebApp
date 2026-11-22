@@ -1,5 +1,10 @@
 @page "/empleado/citas"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services.Interfaces
+@inject ICitaService CitaService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Gestión de Citas - Personal - Mimados</PageTitle>
 
@@ -7,7 +12,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
             <h2 class="mb-1">Gestión de Citas</h2>
-            <p class="text-muted mb-0">Consulta y administra las citas de los pacientes.</p>
+            <p class="text-muted mb-0">Consulta y administra tus citas asignadas.</p>
         </div>
         <a class="btn btn-primary" href="/empleado/citas/nueva"><i class="bi bi-calendar-plus me-1"></i> Registrar Nueva Cita</a>
     </div>
@@ -16,7 +21,7 @@
         <div class="row align-items-end">
             <div class="col-md-4 mb-2">
                 <label for="emp-buscar" class="form-label fw-bold">Buscar cliente o mascota:</label>
-                <input type="text" id="emp-buscar" class="form-control" placeholder="Ej. Juan Pérez o Firulais" @bind="textoBuscar" @bind:event="oninput" />
+                <input type="text" id="emp-buscar" class="form-control" placeholder="Ej. Juan Pérez o Firu" @bind="textoBuscar" />
             </div>
             <div class="col-md-3 mb-2">
                 <label for="emp-fecha" class="form-label fw-bold">Fecha:</label>
@@ -26,56 +31,98 @@
                 <label for="emp-estado" class="form-label fw-bold">Estado:</label>
                 <select class="form-select" id="emp-estado" @bind="estadoFiltro">
                     <option value="">Todos</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Confirmada">Confirmada</option>
-                    <option value="Cancelada">Cancelada</option>
+                    <option value="PROGRAMADA">Programada</option>
+                    <option value="CONFIRMADA">Confirmada</option>
+                    <option value="ATENDIDA">Atendida</option>
+                    <option value="CANCELADA">Cancelada</option>
+                    <option value="NO_ASISTIO">No asistió</option>
                 </select>
             </div>
             <div class="col-md-2 mb-2 d-grid">
-                <button type="button" class="btn btn-outline-primary" @onclick="BuscarCitas"><i class="bi bi-search me-1"></i> Buscar</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="BuscarCitas" disabled="@cargando">
+                    <i class="bi bi-search me-1"></i> Buscar
+                </button>
             </div>
         </div>
     </div>
 
+    @if (!string.IsNullOrEmpty(mensajeError))
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
     <div class="card shadow-sm border-0 bg-white">
-        <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-calendar3 text-primary me-2"></i>Listado de Citas</h5></div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-3">Código</th><th>Cliente</th><th>Mascota</th><th>Servicio</th><th>Fecha / Hora</th><th>Estado</th><th class="text-end pe-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var cita in citasFiltradas)
-                        {
-                            <tr>
-                                <td class="ps-3">@cita.Codigo</td>
-                                <td>@cita.Cliente</td>
-                                <td>@cita.Mascota</td>
-                                <td>@cita.Servicio</td>
-                                <td>@cita.FechaHora.ToString("dd/MM/yyyy, HH:mm")</td>
-                                <td><span class="badge @ClaseEstado(cita.Estado)">@cita.Estado</span></td>
-                                <td class="text-end pe-3">
-                                    <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
-                                        <a class="btn btn-outline-primary btn-sm" href="@($"/empleado/citas/detalle/{cita.Id}")">Ver</a>
-                                        <a class="btn btn-outline-secondary btn-sm" href="@($"/empleado/citas/editar/{cita.Id}")">Editar</a>
-                                        <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => MostrarEliminar(cita.Id)">Eliminar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                        @if (citasFiltradas.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No se encontraron citas con los filtros seleccionados.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-calendar3 text-primary me-2"></i>Listado de Citas</h5>
+            <span class="text-muted small">Total: @totalCount cita(s)</span>
         </div>
+        <div class="card-body p-0">
+            @if (cargando)
+            {
+                <div class="text-center text-muted py-4">Cargando citas...</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Código</th>
+                                <th>Cliente</th>
+                                <th>Mascota</th>
+                                <th>Motivo / Servicio</th>
+                                <th>Fecha / Hora</th>
+                                <th>Estado</th>
+                                <th class="text-end pe-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cita in citas)
+                            {
+                                <tr>
+                                    <td class="ps-3">C-@cita.CitaId.ToString("000")</td>
+                                    <td>@cita.NombreCliente</td>
+                                    <td>@cita.NombreMascota <span class="text-muted small">(@cita.Especie)</span></td>
+                                    <td>@(string.IsNullOrWhiteSpace(cita.Motivo) ? "-" : cita.Motivo)</td>
+                                    <td>@cita.FechaHoraInicio.ToString("dd/MM/yyyy, HH:mm")</td>
+                                    <td><span class="badge @ClaseEstado(cita.Estado)">@cita.Estado</span></td>
+                                    <td class="text-end pe-3">
+                                        <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                                            @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
+                                            {
+                                                <a class="btn btn-primary btn-sm" href="@($"/veterinario/atenciones/nueva?citaId={cita.CitaId}")">Atender</a>
+                                            }
+                                            <a class="btn btn-outline-primary btn-sm" href="@($"/empleado/citas/detalle/{cita.CitaId}")">Ver</a>
+                                            <a class="btn btn-outline-secondary btn-sm" href="@($"/empleado/citas/editar/{cita.CitaId}")">Editar</a>
+                                            @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
+                                            {
+                                                <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => MostrarEliminar(cita.CitaId)">Cancelar</button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            @if (citas.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No se encontraron citas con los filtros seleccionados.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+        @if (TotalPaginas > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Página @(pageNumber + 1) de @TotalPaginas</span>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" disabled="@(pageNumber <= 0 || cargando)" @onclick="PaginaAnterior">Anterior</button>
+                    <button type="button" class="btn btn-outline-secondary" disabled="@(pageNumber + 1 >= TotalPaginas || cargando)" @onclick="PaginaSiguiente">Siguiente</button>
+                </div>
+            </div>
+        }
     </div>
 
     @if (mostrarModalEliminar)
@@ -84,13 +131,13 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">¿Eliminar la cita C-@(citaSeleccionada.ToString("000"))?</h5>
+                        <h5 class="modal-title">¿Cancelar la cita C-@(citaSeleccionada.ToString("000"))?</h5>
                         <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" @onclick="CerrarEliminar"></button>
                     </div>
-                    <div class="modal-body">¿Confirmas que deseas eliminar esta cita?</div>
+                    <div class="modal-body">¿Confirmas que deseas cancelar esta cita?</div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" @onclick="CerrarEliminar">Volver</button>
-                        <button type="button" class="btn btn-danger" @onclick="ConfirmarEliminacion">Eliminar Cita</button>
+                        <button type="button" class="btn btn-danger" @onclick="ConfirmarEliminacion">Cancelar Cita</button>
                     </div>
                 </div>
             </div>
@@ -98,60 +145,111 @@
     }
     @if (mostrarMensajeEliminacion)
     {
-        <div class="alert alert-success mt-3" role="status">Cita eliminada correctamente.</div>
+        <div class="alert alert-success mt-3" role="status">Cita cancelada correctamente.</div>
     }
 </div>
 
 @code {
-    private readonly List<CitaListado> citas = new();
-
-    private List<CitaListado> citasFiltradas = new();
+    private List<CitaVeterinarioDto> citas = new();
+    private int empleadoId;
     private string textoBuscar = "";
     private DateTime? fechaFiltro;
     private string estadoFiltro = "";
 
-    protected override void OnInitialized()
+    private int pageNumber = 0;
+    private const int RecordsPerPage = 10;
+    private int totalCount = 0;
+    private int TotalPaginas => totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / RecordsPerPage);
+
+    private bool cargando = true;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
     {
-        citasFiltradas = citas.ToList();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        string? idTexto = authState.User.FindFirst("UsuarioId")?.Value;
+        if (int.TryParse(idTexto, out int id) && id > 0)
+        {
+            empleadoId = id;
+            await CargarCitasAsync();
+        }
+        else
+        {
+            cargando = false;
+            mensajeError = "No se pudo identificar al veterinario autenticado.";
+        }
     }
 
-    private void BuscarCitas()
+    private async Task CargarCitasAsync()
     {
-        string texto = textoBuscar.Trim();
-        citasFiltradas = citas.Where(cita =>
-            (texto.Length == 0 ||
-                cita.Cliente.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-                cita.Mascota.Contains(texto, StringComparison.OrdinalIgnoreCase)) &&
-            (!fechaFiltro.HasValue || cita.FechaHora.Date == fechaFiltro.Value.Date) &&
-            (string.IsNullOrWhiteSpace(estadoFiltro) ||
-                string.Equals(cita.Estado, estadoFiltro, StringComparison.OrdinalIgnoreCase))
-        ).ToList();
+        cargando = true;
+        mensajeError = "";
+        var resultado = await CitaService.ListarPorVeterinarioAsync(
+            empleadoId, textoBuscar, fechaFiltro, estadoFiltro, pageNumber, RecordsPerPage);
+
+        citas = resultado.Page;
+        totalCount = resultado.TotalCount;
+        cargando = false;
     }
 
-    private static string ClaseEstado(string estado) => estado switch
+    private async Task BuscarCitas()
     {
-        "Confirmada" => "badge-mimados-solid",
-        "Pendiente" => "badge-mimados-primary",
-        "Cancelada" => "badge-mimados-danger",
+        pageNumber = 0;
+        await CargarCitasAsync();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (pageNumber > 0)
+        {
+            pageNumber--;
+            await CargarCitasAsync();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (pageNumber + 1 < TotalPaginas)
+        {
+            pageNumber++;
+            await CargarCitasAsync();
+        }
+    }
+
+    private static string ClaseEstado(string estado) => estado?.ToUpperInvariant() switch
+    {
+        "CONFIRMADA" => "badge-mimados-solid",
+        "PROGRAMADA" => "badge-mimados-primary",
+        "ATENDIDA" => "badge-mimados-solid",
+        "CANCELADA" => "badge-mimados-danger",
         _ => "badge-mimados-neutral"
     };
-
-    private sealed record CitaListado(int Id, string Codigo, string Cliente,
-        string Mascota, string Servicio, DateTime FechaHora, string Estado);
 
     private bool mostrarModalEliminar;
     private bool mostrarMensajeEliminacion;
     private int citaSeleccionada;
+
     private void MostrarEliminar(int id)
     {
         citaSeleccionada = id;
         mostrarModalEliminar = true;
         mostrarMensajeEliminacion = false;
     }
+
     private void CerrarEliminar() => mostrarModalEliminar = false;
-    private void ConfirmarEliminacion()
+
+    private async Task ConfirmarEliminacion()
     {
         mostrarModalEliminar = false;
-        mostrarMensajeEliminacion = true;
+        bool ok = await CitaService.CancelarAsync(citaSeleccionada);
+        if (ok)
+        {
+            mostrarMensajeEliminacion = true;
+            await CargarCitasAsync();
+        }
+        else
+        {
+            mensajeError = "No se pudo cancelar la cita seleccionada.";
+        }
     }
 }

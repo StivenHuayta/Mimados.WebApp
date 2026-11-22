@@ -12,5 +12,8 @@ using Mimados.WebApp.Models;
     Task<bool> EliminarMascotaAsync(int mascotaId);
     Task<List<RegistroMedico>> ObtenerHistorialAsync(int mascotaId);
     string ObtenerUrlPdfHistorial(int mascotaId);
+    Task<PageResultDto<PacienteVeterinarioDto>> ListarPacientesVeterinarioAsync(
+        string? searchText, int pageNumber, int recordsPerPage);
+    Task<List<AtencionHistorialDto>> ObtenerHistorialVeterinarioAsync(int mascotaId);
 }
 

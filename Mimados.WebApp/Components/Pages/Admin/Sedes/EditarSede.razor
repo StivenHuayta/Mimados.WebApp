@@ -327,7 +327,7 @@
     private async Task AbrirBuscadorServicio()
     {
         textoBusquedaServicio = "";
-        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id);
+        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id,textoBusquedaServicio);
 
         mostrarModalServicio = true;
     }
@@ -347,13 +347,14 @@
         nuevoSedeServicio.Servicio = servicio;
         await SedeServicioService.CrearSedeServicioAsync(nuevoSedeServicio);
 
-        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id);
+        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id,textoBusquedaServicio);
         listaServiciosDTO = await SedeServicioService.ObtenerServiciosPorSedeAsync(Id);
         
     }
-    private void FiltrarServicios()
+    private async Task FiltrarServicios()
     {
-        
+
+        serviciosFiltrados = await SedeServicioService.ObtenerServiciosDisponiblesAsync(Id,textoBusquedaServicio);
     }
 
     public class SedeEditar

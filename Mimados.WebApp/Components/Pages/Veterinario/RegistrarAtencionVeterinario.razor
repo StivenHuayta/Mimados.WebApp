@@ -1,6 +1,13 @@
 @page "/veterinario/atenciones/nueva"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Mimados.WebApp.Models
+@using Mimados.WebApp.Services.Interfaces
 @inject NavigationManager Navigation
+@inject ICitaService CitaService
+@inject IMascotaService MascotaService
+@inject IAtencionService AtencionService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container-fluid px-0" style="max-width: 1000px;">
     <!-- Encabezado -->
@@ -20,8 +27,11 @@
         </div>
     </div>
 
-    @* Alerta de Éxito al Registrar *@
-    @if (guardadoExitoso)
+    @if (cargando)
+    {
+        <div class="card shadow-sm border-0 p-4 text-center text-muted">Cargando información de la atención...</div>
+    }
+    else if (guardadoExitoso)
     {
         <div class="card shadow border-0 border-start border-5 border-primary mb-4 bg-white">
             <div class="card-body p-4 text-center">
@@ -30,15 +40,15 @@
                 </div>
                 <h4 class="fw-bold text-primary mb-2">¡Atención Clínica Registrada con Éxito!</h4>
                 <p class="text-muted fs-6 mb-4">
-                    Los detalles clínicos han sido anexados satisfactoriamente al expediente médico de 
-                    <strong class="text-dark">@mascotaSeleccionada?.Nombre</strong>. 
-                    @if (citaSeleccionada != null)
+                    Los detalles clínicos han sido anexados satisfactoriamente al expediente médico de
+                    <strong class="text-dark">@mascotaSeleccionada?.Nombre</strong>.
+                    @if (citaIdSeleccionada > 0)
                     {
-                        <span>La Cita <strong>#@citaSeleccionada.CitaId</strong> ha sido marcada como <span class="badge badge-mimados-solid">ATENDIDA</span>.</span>
+                        <span>La Cita <strong>#@citaIdSeleccionada</strong> ha sido marcada como <span class="badge badge-mimados-solid">ATENDIDA</span>.</span>
                     }
                 </p>
                 <div class="d-flex justify-content-center gap-3">
-                    <a href="/veterinario/historial/@(mascotaSeleccionada?.MascotaId ?? 1)" class="btn btn-primary fw-bold px-4">
+                    <a href="/veterinario/historial/@(mascotaSeleccionada?.MascotaId ?? 0)" class="btn btn-primary fw-bold px-4">
                         <i class="bi bi-journal-medical me-1"></i> Ver Historial de la Mascota
                     </a>
                     <a href="/empleado/citas" class="btn btn-outline-secondary fw-bold px-4">
@@ -50,7 +60,6 @@
     }
     else
     {
-        <!-- Mensaje de Error de Validación -->
         @if (!string.IsNullOrEmpty(mensajeError))
         {
             <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
@@ -71,20 +80,22 @@
                             </span>
                             <div>
                                 <h4 class="mb-0 fw-bold text-white">@(mascotaSeleccionada?.Nombre ?? "Seleccione Mascota")</h4>
-                                <div class="opacity-75 small">
-                                    @(mascotaSeleccionada?.Especie) • @(mascotaSeleccionada?.Raza) • @(mascotaSeleccionada?.Sexo) • Dueño: @(mascotaSeleccionada?.NombreCliente)
-                                </div>
+                                @if (mascotaSeleccionada != null)
+                                {
+                                    <div class="opacity-75 small">
+                                        @mascotaSeleccionada.Especie • @mascotaSeleccionada.Raza • @mascotaSeleccionada.Sexo
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
                     <div class="col-md-5 mt-3 mt-md-0 ps-md-4">
                         <span class="badge bg-light text-primary text-uppercase fw-bold mb-1">Personal Veterinario</span>
-                        <div class="fw-bold mt-1">Veterinario en turno</div>
-                        <div class="opacity-75 small">Pendiente de conectar</div>
-                        @if (citaSeleccionada != null)
+                        <div class="fw-bold mt-1">@nombreVeterinario</div>
+                        @if (citaIdSeleccionada > 0)
                         {
                             <div class="mt-1 badge bg-white text-primary">
-                                <i class="bi bi-calendar-check me-1"></i> Vinculado a Cita #@citaSeleccionada.CitaId
+                                <i class="bi bi-calendar-check me-1"></i> Vinculado a Cita #@citaIdSeleccionada
                             </div>
                         }
                     </div>
@@ -92,7 +103,7 @@
             </div>
         </div>
 
-        <!-- Formulario Clínico de Atención (Estructura acorde a la tabla `atencion`) -->
+        <!-- Formulario Clínico de Atención -->
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 border-bottom">
                 <h5 class="card-title m-0 fw-bold text-dark">
@@ -101,34 +112,33 @@
             </div>
             <div class="card-body">
                 <form>
-                    <!-- Sección Mascota / Cita si no vinieron por parámetro -->
-                    @if (CitaId == null && MascotaId == null)
+                    @if (!CitaId.HasValue || CitaId.Value <= 0)
                     {
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Seleccionar Mascota a Atender <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold">Seleccionar Paciente <span class="text-danger">*</span></label>
                                 <select class="form-select" @onchange="OnCambiarMascota" value="@(mascotaSeleccionada?.MascotaId ?? 0)">
+                                    <option value="0">-- Seleccione mascota --</option>
                                     @foreach (var m in listaMascotas)
                                     {
-                                        <option value="@m.MascotaId">@m.Nombre (@m.Especie - @m.Raza) - Dueño: @m.NombreCliente</option>
+                                        <option value="@m.MascotaId">@m.Nombre (@m.Especie - @m.Raza) • Dueño: @m.NombreCliente</option>
                                     }
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Servicio Clínico Realizado</label>
-                                <select class="form-select" @bind="servicioRealizado">
-                                    <option value="Consulta General">Consulta General</option>
-                                    <option value="Vacunación">Vacunación</option>
-                                    <option value="Desparasitación">Desparasitación</option>
-                                    <option value="Dermatología Veterinaria">Dermatología Veterinaria</option>
-                                    <option value="Traumatología y Ortopedia">Traumatología y Ortopedia</option>
-                                    <option value="Control Rutinario">Control Rutinario</option>
+                                <label class="form-label fw-bold">Cita a Finalizar <span class="text-danger">*</span></label>
+                                <select class="form-select" @bind="citaIdSeleccionada">
+                                    <option value="0">-- Seleccione cita pendiente --</option>
+                                    @foreach (var c in citasPendientesMascota)
+                                    {
+                                        <option value="@c.CitaId">Cita #@c.CitaId • @c.FechaHoraInicio.ToString("dd/MM/yyyy HH:mm") (@c.Estado)</option>
+                                    }
                                 </select>
                             </div>
                         </div>
                     }
 
-                    <!-- 1. Triaje y Signos Vitales (peso_actual, temperatura) -->
+                    <!-- 1. Triaje y Signos Vitales -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
                             <i class="bi bi-heart-pulse text-danger me-1"></i> 1. Triaje y Signos Vitales
@@ -157,7 +167,7 @@
                         </div>
                     </div>
 
-                    <!-- 2. Anamnesis y Diagnóstico (sintomas, diagnostico) -->
+                    <!-- 2. Anamnesis y Diagnóstico -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
                             <i class="bi bi-clipboard2-check text-primary me-1"></i> 2. Evaluación Clínica
@@ -174,7 +184,7 @@
                         </div>
                     </div>
 
-                    <!-- 3. Tratamiento y Prescripción (tratamiento_recetado, observaciones) -->
+                    <!-- 3. Tratamiento y Prescripción -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
                             <i class="bi bi-capsule text-primary me-1"></i> 3. Plan Terapéutico y Prescripción
@@ -191,15 +201,15 @@
                         </div>
                     </div>
 
-                    <!-- 4. Liquidación y Monto Total (monto_total) -->
+                    <!-- 4. Liquidación y Monto Total -->
                     <div class="mb-4">
                         <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-2">
                             <i class="bi bi-cash-stack text-primary me-1"></i> 4. Liquidación del Servicio
                         </h6>
                         <div class="row g-3 align-items-center">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold small">Servicio Aplicado</label>
-                                <input type="text" class="form-control" @bind="servicioRealizado" />
+                                <label class="form-label fw-bold small">Motivo / Servicio de la Cita</label>
+                                <input type="text" class="form-control bg-light" value="@servicioRealizado" readonly />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Monto Total a Cobrar (S/.) <span class="text-danger">*</span></label>
@@ -213,11 +223,11 @@
                 </form>
             </div>
             <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
-                <button type="button" class="btn btn-outline-secondary" @onclick="Volver">
+                <button type="button" class="btn btn-outline-secondary" @onclick="Volver" disabled="@guardando">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
                 </button>
-                <button type="button" class="btn btn-primary btn-lg fw-bold px-4" @onclick="GuardarAtencion">
-                    <i class="bi bi-check-circle me-1"></i> Guardar Atención y Finalizar Cita
+                <button type="button" class="btn btn-primary btn-lg fw-bold px-4" @onclick="GuardarAtencion" disabled="@guardando">
+                    <i class="bi bi-check-circle me-1"></i> @(guardando ? "Guardando..." : "Guardar Atención y Finalizar Cita")
                 </button>
             </div>
         </div>
@@ -231,10 +241,13 @@
     [SupplyParameterFromQuery]
     public int? MascotaId { get; set; }
 
-    private Cita? citaSeleccionada;
+    private int empleadoId;
+    private string nombreVeterinario = "Veterinario";
+    private int citaIdSeleccionada;
     private Mascota? mascotaSeleccionada;
+    private List<PacienteVeterinarioDto> listaMascotas = new();
+    private List<Cita> citasPendientesMascota = new();
 
-    // Campos del formulario
     private decimal? pesoActual;
     private decimal? temperatura = 38.5m;
     private string sintomas = "";
@@ -244,63 +257,104 @@
     private string servicioRealizado = "Consulta General";
     private decimal montoTotal = 60.00m;
 
+    private bool cargando = true;
+    private bool guardando = false;
     private string mensajeError = "";
     private bool guardadoExitoso = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        CargarDatosContexto();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        string? idTexto = authState.User.FindFirst("UsuarioId")?.Value;
+        int.TryParse(idTexto, out empleadoId);
+        nombreVeterinario = authState.User.Identity?.Name ?? "Veterinario";
+
+        await CargarDatosContextoAsync();
+        cargando = false;
     }
 
-    private List<Mascota> listaMascotas = new();
-
-    protected override void OnParametersSet()
+    private async Task CargarDatosContextoAsync()
     {
-        CargarDatosContexto();
-    }
-
-    private void CargarDatosContexto()
-    {
-        // TODO: Conectar con ICitaService y IMascotaService
-        if (CitaId.HasValue && CitaId.Value > 0 && citaSeleccionada != null)
+        if (CitaId.HasValue && CitaId.Value > 0)
         {
-            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == citaSeleccionada.MascotaId);
-            sintomas = $"Atención en consultorio por motivo: {citaSeleccionada.Motivo}";
-            servicioRealizado = citaSeleccionada.ServicioSolicitado;
-            montoTotal = citaSeleccionada.MontoEstimado;
+            var cita = await CitaService.ObtenerPorIdAsync(CitaId.Value);
+            if (cita == null)
+            {
+                mensajeError = $"No se encontró la cita #{CitaId.Value}.";
+                return;
+            }
+
+            citaIdSeleccionada = cita.CitaId;
+            if (!string.IsNullOrWhiteSpace(cita.Motivo))
+            {
+                servicioRealizado = cita.Motivo;
+                sintomas = $"Atención en consultorio por motivo: {cita.Motivo}";
+            }
+
+            mascotaSeleccionada = await MascotaService.ObtenerMascotaPorIdAsync(cita.MascotaId);
             pesoActual = mascotaSeleccionada?.PesoReferencial;
             return;
         }
 
-        if (MascotaId.HasValue && MascotaId.Value > 0)
+        var pacientes = await MascotaService.ListarPacientesVeterinarioAsync(null, 0, 50);
+        listaMascotas = pacientes.Page;
+
+        int idObjetivo = MascotaId.HasValue && MascotaId.Value > 0
+            ? MascotaId.Value
+            : listaMascotas.FirstOrDefault()?.MascotaId ?? 0;
+
+        if (idObjetivo > 0)
         {
-            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == MascotaId.Value);
-            pesoActual = mascotaSeleccionada?.PesoReferencial;
-        }
-        else if (mascotaSeleccionada == null)
-        {
-            mascotaSeleccionada = listaMascotas.FirstOrDefault();
-            pesoActual = mascotaSeleccionada?.PesoReferencial;
+            await SeleccionarMascotaAsync(idObjetivo);
         }
     }
 
-    private void OnCambiarMascota(ChangeEventArgs e)
+    private async Task OnCambiarMascota(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
+        if (int.TryParse(e.Value?.ToString(), out int id) && id > 0)
         {
-            mascotaSeleccionada = listaMascotas.FirstOrDefault(m => m.MascotaId == id);
-            pesoActual = mascotaSeleccionada?.PesoReferencial;
+            await SeleccionarMascotaAsync(id);
+        }
+        else
+        {
+            mascotaSeleccionada = null;
+            citasPendientesMascota = new();
+            citaIdSeleccionada = 0;
         }
     }
 
-    private void GuardarAtencion()
+    private async Task SeleccionarMascotaAsync(int mascotaId)
+    {
+        mascotaSeleccionada = await MascotaService.ObtenerMascotaPorIdAsync(mascotaId);
+        pesoActual = mascotaSeleccionada?.PesoReferencial;
+
+        var citas = await CitaService.ListarPorMascotaAsync(mascotaId);
+        citasPendientesMascota = citas
+            .Where(c => c.Estado == "PROGRAMADA" || c.Estado == "CONFIRMADA")
+            .OrderBy(c => c.FechaHoraInicio)
+            .ToList();
+
+        citaIdSeleccionada = citasPendientesMascota.FirstOrDefault()?.CitaId ?? 0;
+        var primeraCita = citasPendientesMascota.FirstOrDefault();
+        if (primeraCita != null && !string.IsNullOrWhiteSpace(primeraCita.Motivo))
+        {
+            servicioRealizado = primeraCita.Motivo;
+        }
+    }
+
+    private async Task GuardarAtencion()
     {
         mensajeError = "";
 
-        // Validaciones requeridas
-        if (mascotaSeleccionada == null)
+        if (empleadoId <= 0)
         {
-            mensajeError = "Debe seleccionar un paciente para registrar la atención.";
+            mensajeError = "No se pudo identificar al veterinario autenticado.";
+            return;
+        }
+
+        if (citaIdSeleccionada <= 0)
+        {
+            mensajeError = "Debe seleccionar una cita pendiente para registrar la atención.";
             return;
         }
 
@@ -340,25 +394,31 @@
             return;
         }
 
-        // Crear la entidad de atención clínica acorde a la BD
-        var nuevaAtencion = new Atencion
+        guardando = true;
+        var request = new RegistrarAtencionDto
         {
-            CitaId = citaSeleccionada?.CitaId ?? 0,
-            MascotaId = mascotaSeleccionada.MascotaId,
-            EmpleadoId = 0,
-            FechaHoraRegistro = DateTime.Now,
-            PesoActual = pesoActual.Value,
-            Temperatura = temperatura.Value,
+            CitaId = citaIdSeleccionada,
+            EmpleadoId = empleadoId,
+            PesoActual = (double)pesoActual.Value,
+            Temperatura = (double)temperatura.Value,
             Sintomas = sintomas.Trim(),
             Diagnostico = diagnostico.Trim(),
             TratamientoRecetado = tratamientoRecetado.Trim(),
-            Observaciones = observaciones.Trim(),
-            MontoTotal = montoTotal,
-            ServicioRealizado = servicioRealizado
+            Observaciones = string.IsNullOrWhiteSpace(observaciones) ? null : observaciones.Trim(),
+            MontoTotal = montoTotal
         };
 
-        // TODO: Enviar nuevaAtencion al servicio REST real
-        guardadoExitoso = true;
+        var (success, message) = await AtencionService.RegistrarAsync(request);
+        guardando = false;
+
+        if (success)
+        {
+            guardadoExitoso = true;
+        }
+        else
+        {
+            mensajeError = message;
+        }
     }
 
     private void Volver()
@@ -366,4 +426,3 @@
         Navigation.NavigateTo("/empleado/citas");
     }
 }
-
