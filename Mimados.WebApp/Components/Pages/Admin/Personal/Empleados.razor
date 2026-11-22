@@ -100,13 +100,6 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Rol</label>
-                        <select class="form-select" @bind="rolEdicion">
-                            <option value="Veterinario">Veterinario</option>
-                            <option value="Administrador">Administrador</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
                         <label class="form-label fw-bold">Código CMP (Si es veterinario)</label>
                         <input type="text" class="form-control" @bind="empleadoEditando.CodigoCmvp" @bind:event="oninput" placeholder="Ej: CMP-10293" />
                     </div>
