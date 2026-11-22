@@ -126,9 +126,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Cita a Finalizar <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold">Cita a Finalizar <span class="text-muted fw-normal small">(Opcional)</span></label>
                                 <select class="form-select" @bind="citaIdSeleccionada">
-                                    <option value="0">-- Seleccione cita pendiente --</option>
+                                    <option value="0">-- Sin cita previa (atención directa) --</option>
                                     @foreach (var c in citasPendientesMascota)
                                     {
                                         <option value="@c.CitaId">Cita #@c.CitaId • @c.FechaHoraInicio.ToString("dd/MM/yyyy HH:mm") (@c.Estado)</option>
@@ -352,9 +352,9 @@
             return;
         }
 
-        if (citaIdSeleccionada <= 0)
+        if (citaIdSeleccionada <= 0 && (mascotaSeleccionada == null || mascotaSeleccionada.MascotaId <= 0))
         {
-            mensajeError = "Debe seleccionar una cita pendiente para registrar la atención.";
+            mensajeError = "Debe seleccionar un paciente o una cita pendiente para registrar la atención.";
             return;
         }
 
@@ -397,8 +397,10 @@
         guardando = true;
         var request = new RegistrarAtencionDto
         {
-            CitaId = citaIdSeleccionada,
+            CitaId = citaIdSeleccionada > 0 ? citaIdSeleccionada : null,
+            MascotaId = mascotaSeleccionada?.MascotaId,
             EmpleadoId = empleadoId,
+            Motivo = citaIdSeleccionada > 0 ? null : "Atención directa sin cita previa",
             PesoActual = (double)pesoActual.Value,
             Temperatura = (double)temperatura.Value,
             Sintomas = sintomas.Trim(),
