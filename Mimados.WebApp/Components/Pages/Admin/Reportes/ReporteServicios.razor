@@ -64,11 +64,12 @@
                     <thead class="table-light">
                         <tr>
                             <th class="ps-3">#</th>
-                            <th>Nombre del Servicio</th>
-                            <th>Cantidad</th>
-                            <th>Precio Ponderado</th>
-                            <th>Ingresos Totales</th>
-                            <th>Nivel de demanda</th>
+                            <th>Servicio</th>
+                            <th class="text-center">Total Solicitudes</th>
+                            <th class="text-end" style="padding-right: 2.5rem;">% Solicitudes</th>
+                            <th class="text-end" style="padding-right: 2.5rem;">Precio Ponderado</th>
+                            <th class="text-end" style="padding-right: 2.5rem;">Ingresos Totales</th>
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -85,10 +86,10 @@
                                 <tr>
                                     <td class="ps-3">@c.Orden</td>
                                     <td><strong>@c.Nombre</strong></td>
-                                    <td><span class="badge badge-mimados-primary fs-6">@c.Cantidad solicitudes</span></td>
-                                    <td>@c.Precio.ToString("N2")</td>
-                                    <td>@c.Total.ToString("N2")</td>
-                                    <td>@(c.Proporcion*100) %</td>
+                                    <td class="text-center"><span class="badge badge-mimados-primary fs-6">@c.Cantidad solicitudes</span></td>
+                                    <td class="text-end" style="padding-right: 2.5rem;">@c.Proporcion.ToString("P2")</td><!-- tamanio personalizado-->
+                                    <td class="text-end pe-5" style="padding-right: 2.5rem;">@c.Precio.ToString("N2")</td>
+                                    <td class="text-end pe-5" style="padding-right: 2.5rem;">@c.Total.ToString("N2")</td>
                                 </tr>
                             }
                         }
