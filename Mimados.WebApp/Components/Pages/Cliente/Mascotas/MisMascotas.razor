@@ -90,18 +90,18 @@
                                                 </li>
                                                 <li><hr class="dropdown-divider" /></li>
                                                 <li>
-                                                    @if (tieneAtenciones)
+                                                    @*  @if (tieneAtenciones)
                                                     {
                                                         <span class="dropdown-item text-muted disabled" title="No se puede dar de baja porque tiene atenciones registradas">
                                                             <i class="bi bi-lock me-2"></i>Dar de baja (con atenciones)
                                                         </span>
                                                     }
                                                     else
-                                                    {
+                                                    { *@
                                                         <button type="button" class="dropdown-item text-danger" @onclick="() => SolicitarBajaDesdeMenu(mascota)">
                                                             <i class="bi bi-archive me-2"></i>Dar de baja
                                                         </button>
-                                                    }
+                                                    @*  } *@
                                                 </li>
                                             </ul>
                                         }
@@ -310,7 +310,7 @@
     private void SolicitarBajaDesdeMenu(Mimados.WebApp.Models.Mascota mascota)
     {
         menuAbiertoMascotaId = null;
-        if (mascotasConAtenciones.Contains(mascota.MascotaId)) return;
+        //if (mascotasConAtenciones.Contains(mascota.MascotaId)) return;
         mascotaADarDeBaja = mascota;
         mostrarModalBaja = true;
     }
