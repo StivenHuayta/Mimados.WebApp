@@ -181,7 +181,7 @@
                            @bind="fecha" @bind:after="LimpiarHorarios" />
                 </div>
 
-                @* Igual que en NuevaCita.razor del cliente: hora de 0 a 23 y minutos de 5 en 5. *@
+                @* Hora en formato de 24 horas y minutos 00 o 30. *@
                 <div class="col-md-3 mb-3">
                     <label class="form-label fw-bold" for="emp-form-hora">Hora (24 h):</label>
                     <select class="form-select" id="emp-form-hora" @bind="Hora24">
@@ -195,10 +195,8 @@
                 <div class="col-md-3 mb-3">
                     <label class="form-label fw-bold" for="emp-form-minutos">Minutos:</label>
                     <select class="form-select" id="emp-form-minutos" @bind="Minuto">
-                        @for (int i = 0; i < 60; i += 5)
-                        {
-                            <option value="@i">@($"{i:00}")</option>
-                        }
+                        <option value="0">00</option>
+                        <option value="30">30</option>
                     </select>
                     <small class="text-muted">
                         Hora seleccionada: @(hora?.ToString("HH:mm") ?? "--:--")
@@ -490,7 +488,7 @@
         LimpiarHorarios();
     }
 
-    // Misma selección de horas y minutos que usa NuevaCita.razor del cliente.
+    // Horas de 00 a 23 y minutos permitidos: 00 y 30.
     private int Hora24
     {
         get => hora?.Hour ?? 10;
@@ -524,7 +522,8 @@
 
     private void SeleccionarHorario(string texto)
     {
-        if (TimeOnly.TryParse(texto, out var seleccion))
+        if (TimeOnly.TryParse(texto, out var seleccion) &&
+            (seleccion.Minute == 0 || seleccion.Minute == 30))
         {
             hora = new TimeOnly(seleccion.Hour, seleccion.Minute);
         }
@@ -562,7 +561,8 @@
             // La duración es la del servicio nuevo o la de la cita existente.
             horariosDisponibles = (await DisponibilidadService.ConsultarAsync(
                 veterinario, fecha.Value, DuracionCita))
-                .Where(h => TimeOnly.TryParse(h, out _))
+                .Where(h => TimeOnly.TryParse(h, out var t) &&
+                            (t.Minute == 0 || t.Minute == 30))
                 .Distinct()
                 .OrderBy(h => TimeOnly.Parse(h))
                 .ToList();
@@ -572,7 +572,8 @@
                 fecha.Value.Date == fechaInicioOriginal.Date)
             {
                 string horaActual = fechaInicioOriginal.ToString("HH:mm");
-                if (!horariosDisponibles.Contains(horaActual))
+                if ((fechaInicioOriginal.Minute == 0 || fechaInicioOriginal.Minute == 30) &&
+                    !horariosDisponibles.Contains(horaActual))
                 {
                     horariosDisponibles.Add(horaActual);
                     horariosDisponibles = horariosDisponibles.OrderBy(h => TimeOnly.Parse(h)).ToList();
@@ -627,6 +628,12 @@
         if (!fecha.HasValue || !hora.HasValue)
         {
             errorCarga = "Selecciona la fecha y un horario disponible.";
+            return;
+        }
+
+        if (hora.Value.Minute != 0 && hora.Value.Minute != 30)
+        {
+            errorCarga = "Solo se pueden seleccionar los minutos 00 y 30.";
             return;
         }
 
