@@ -124,10 +124,8 @@
             <div class="col-md-3 mb-3">
                 <label class="form-label fw-bold">Minutos:</label>
                 <select class="form-select" @bind="Minuto">
-                    @for (int i = 0; i < 60; i += 5)
-                    {
-                        <option value="@i">@($"{i:00}")</option>
-                    }
+                    <option value="0">00</option>
+                    <option value="30">30</option>
                 </select>
                 <small class="text-muted">
                     Hora seleccionada: @(hora?.ToString("HH:mm") ?? "--:--")
@@ -349,7 +347,7 @@
             if (!horarioDisponible)
             {
                 mensajeError =
-                    "El horario seleccionado ya no está disponible.";
+                    "El horario seleccionado no está disponible.";
                 return;
             }
 

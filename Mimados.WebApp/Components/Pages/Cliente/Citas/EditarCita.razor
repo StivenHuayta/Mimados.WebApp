@@ -7,6 +7,7 @@
 @inject ICitaService CitaService
 @inject IMascotaService MascotaService
 @inject IVeterinarioService VeterinarioService
+@inject IDisponibilidadService DisponibilidadService
 
 <PageTitle>Editar Cita - Mimados</PageTitle>
 
@@ -127,10 +128,8 @@
                         <div class="col-6">
                             <label class="form-label">Minutos:</label>
                             <select class="form-select" @bind="Minuto">
-                                @for (int i = 0; i < 60; i += 5)
-                                {
-                                    <option value="@i">@($"{i:00}")</option>
-                                }
+                                <option value="0">00</option>
+                                <option value="30">30</option>
                             </select>
                         </div>
                     </div>
@@ -325,10 +324,38 @@
             Motivo = motivo.Trim()
         };
 
+        // Si el cliente solo modifica el motivo, su horario original
+        // no debe contarse como una cita ocupada.
+        bool cambioHorario = fechaInicio != cita.FechaHoraInicio ||
+                             fechaFin != cita.FechaHoraFin;
+
+        if (cambioHorario && hora.Value.Minute != 0 && hora.Value.Minute != 30)
+        {
+            mensajeError = "Solo se permiten horarios en minutos 00 o 30.";
+            return;
+        }
+
         procesando = true;
 
         try
         {
+            if (cambioHorario)
+            {
+                // Usar el mismo servicio que se consulta al registrar una cita.
+                var horariosLibres = await DisponibilidadService.ConsultarAsync(
+                    cita.EmpleadoId, fechaInicio.Date, DuracionCitaMinutos);
+
+                bool horarioDisponible = horariosLibres.Any(h =>
+                    TimeOnly.TryParse(h, out var horaLibre) &&
+                    horaLibre == TimeOnly.FromDateTime(fechaInicio));
+
+                if (!horarioDisponible)
+                {
+                    mensajeError = "El veterinario no tiene disponibilidad en la fecha y hora seleccionadas.";
+                    return;
+                }
+            }
+
             bool resultado = await CitaService.ModificarAsync(citaActualizada);
 
             if (resultado)
