@@ -3,10 +3,8 @@
 @inject NavigationManager Nav
 
 @using Mimados.WebApp.Models
-@using Microsoft.JSInterop
 
 @inject IMascotaService MascotaService
-@inject IJSRuntime JS
 
 
 <div class="container mt-4" style="max-width: 900px;">
@@ -111,50 +109,9 @@
     private bool generandoPdf = false;
     private string? mensajeErrorPdf;
 
-    private async Task ImprimirReporte()
+    private void ImprimirReporte()
     {
-        if (generandoPdf) return;
-        generandoPdf = true;
-        mensajeErrorPdf = null;
-        mostrarAlertaDescarga = false;
-
-        try
-        {
-            var pdfBytes = await MascotaService.DescargarPdfHistorialAsync(Id);
-            if (pdfBytes != null && pdfBytes.Length > 0)
-            {
-                await using var module = await JS.InvokeAsync<IJSObjectReference>(
-                    "import",
-                    "data:text/javascript;charset=utf-8," + Uri.EscapeDataString("""
-                        export function descargarPdf(bytes, fileName) {
-                            const blob = new Blob([bytes], { type: 'application/pdf' });
-                            const url = URL.createObjectURL(blob);
-                            const win = window.open(url, '_blank');
-                            if (!win) {
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = fileName;
-                                a.click();
-                            }
-                        }
-                    """));
-
-                await module.InvokeVoidAsync("descargarPdf", pdfBytes, $"Historial_Mascota_{Id}.pdf");
-                mostrarAlertaDescarga = true;
-            }
-            else
-            {
-                mensajeErrorPdf = "No se pudo generar el reporte PDF. Verifica que el servidor backend esté activo.";
-            }
-        }
-        catch (Exception)
-        {
-            mensajeErrorPdf = "Ocurrió un error al descargar el reporte PDF.";
-        }
-        finally
-        {
-            generandoPdf = false;
-        }
+        Nav.NavigateTo($"/api/pdf/mascotas/{Id}/historial", forceLoad: true);
     }
 
     

@@ -110,7 +110,7 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    @if (!emp.EsAdmin)
+                                                    @if (emp.EsVeterinario)
                                                     {
                                                         <text>Dr/a. </text>
                                                     }
@@ -253,7 +253,7 @@
         try
         {
             var todosLosEmpleados = await EmpleadoService.ListarEmpleadosAsync();
-            listaEmpleados = todosLosEmpleados.Where(e => !e.EsAdmin).ToList();
+            listaEmpleados = todosLosEmpleados.Where(e => e.EsVeterinario).ToList();
 
             horariosPorEmpleado.Clear();
 

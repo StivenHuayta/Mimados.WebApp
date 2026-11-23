@@ -7,5 +7,6 @@ namespace Mimados.WebApp.Services
     {
         Task<List<ReporteServiciosDTO?>> ObtenerReporteServiciosPorFechas(DateOnly? fechaInicio, DateOnly? fechaFin);
         string ObtenerUrlPdfReporteServivios(DateOnly? fechaInicio, DateOnly? fechaFin);
+        Task<byte[]?> DescargarReportePdfAsync(DateOnly? fechaInicio, DateOnly? fechaFin);
     }
 }

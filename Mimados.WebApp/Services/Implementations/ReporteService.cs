@@ -24,8 +24,19 @@ namespace Mimados.WebApp.Services
         
         public string ObtenerUrlPdfReporteServivios(DateOnly? fechaInicio, DateOnly? fechaFin)
         {
-            //return $"ReporteRS/generarPdf?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}"; 
             return new Uri(_http.BaseAddress!, $"ReporteRS/descargarServicioReporte?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}").ToString();
+        }
+
+        public async Task<byte[]?> DescargarReportePdfAsync(DateOnly? fechaInicio, DateOnly? fechaFin)
+        {
+            var query = new List<string>();
+            if (fechaInicio.HasValue) query.Add($"fechaInicio={fechaInicio.Value:yyyy-MM-dd}");
+            if (fechaFin.HasValue) query.Add($"fechaFin={fechaFin.Value:yyyy-MM-dd}");
+            var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
+
+            var response = await _http.GetAsync($"ReporteRS/descargarServicioReporte{qs}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadAsByteArrayAsync();
         }
 
     }

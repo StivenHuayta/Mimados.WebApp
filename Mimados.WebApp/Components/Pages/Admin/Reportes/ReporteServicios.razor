@@ -166,8 +166,11 @@
 
     private void ExportarPDF()
     {
-        string urlPdf = ReporteService.ObtenerUrlPdfReporteServivios(filtroFechaInicio, filtroFechaFin);
-        Nav.NavigateTo(urlPdf, forceLoad: true);        
+        var query = new List<string>();
+        if (filtroFechaInicio.HasValue) query.Add($"fechaInicio={filtroFechaInicio.Value:yyyy-MM-dd}");
+        if (filtroFechaFin.HasValue) query.Add($"fechaFin={filtroFechaFin.Value:yyyy-MM-dd}");
+        var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
+        Nav.NavigateTo($"/api/pdf/reportes/servicios{qs}", forceLoad: true);
     }
     //private void ImprimirReporte()
 

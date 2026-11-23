@@ -57,6 +57,7 @@ app.UseAuthorization();
 
 // Endpoints de autenticación (/auth/login y /auth/logout)
 app.MapAuthEndpoints();
+app.MapPdfEndpoints();
 
 app.UseAntiforgery();
 app.MapStaticAssets();

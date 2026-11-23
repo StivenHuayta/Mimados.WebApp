@@ -399,8 +399,7 @@
     {
         if (mascotaSeleccionada != null)
         {
-            var url = MascotaService.ObtenerUrlPdfHistorial(mascotaSeleccionada.MascotaId);
-            Navigation.NavigateTo(url, forceLoad: true);
+            Navigation.NavigateTo($"/api/pdf/mascotas/{mascotaSeleccionada.MascotaId}/historial", forceLoad: true);
         }
     }
 }
