@@ -3,9 +3,10 @@
 @inject NavigationManager Nav
 
 @using Mimados.WebApp.Models
+@using Microsoft.JSInterop
 
-@* INICIO CAMBIOS: Inyectar el servicio de mascotas *@
 @inject IMascotaService MascotaService
+@inject IJSRuntime JS
 
 
 <div class="container mt-4" style="max-width: 900px;">
@@ -17,13 +18,21 @@
             <button class="btn btn-secondary me-2" @onclick="Volver">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
-            <button class="btn btn-primary" @onclick="ImprimirReporte">
-                <i class="bi bi-file-earmark-pdf"></i> Descargar Reporte
+            <button class="btn btn-primary" @onclick="ImprimirReporte" disabled="@generandoPdf">
+                <i class="bi bi-file-earmark-pdf"></i> @(generandoPdf ? "Generando..." : "Descargar Reporte")
             </button>
         </div>
     </div>
 
-    @* Mensaje de éxito simulado al descargar *@
+    @if (!string.IsNullOrEmpty(mensajeErrorPdf))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @mensajeErrorPdf
+            <button type="button" class="btn-close" @onclick="() => mensajeErrorPdf = null"></button>
+        </div>
+    }
+
+    @* Mensaje de éxito al descargar *@
     @if (mostrarAlertaDescarga)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -99,13 +108,53 @@
         Nav.NavigateTo("/cliente/mascotas");
     }
 
-    private void ImprimirReporte()
-    {
-        // Generación del reporte exigido por el RF-14
-        mostrarAlertaDescarga = true;
+    private bool generandoPdf = false;
+    private string? mensajeErrorPdf;
 
-        string urlPdf = MascotaService.ObtenerUrlPdfHistorial(Id);
-        Nav.NavigateTo(urlPdf, forceLoad: true);
+    private async Task ImprimirReporte()
+    {
+        if (generandoPdf) return;
+        generandoPdf = true;
+        mensajeErrorPdf = null;
+        mostrarAlertaDescarga = false;
+
+        try
+        {
+            var pdfBytes = await MascotaService.DescargarPdfHistorialAsync(Id);
+            if (pdfBytes != null && pdfBytes.Length > 0)
+            {
+                await using var module = await JS.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "data:text/javascript;charset=utf-8," + Uri.EscapeDataString("""
+                        export function descargarPdf(bytes, fileName) {
+                            const blob = new Blob([bytes], { type: 'application/pdf' });
+                            const url = URL.createObjectURL(blob);
+                            const win = window.open(url, '_blank');
+                            if (!win) {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = fileName;
+                                a.click();
+                            }
+                        }
+                    """));
+
+                await module.InvokeVoidAsync("descargarPdf", pdfBytes, $"Historial_Mascota_{Id}.pdf");
+                mostrarAlertaDescarga = true;
+            }
+            else
+            {
+                mensajeErrorPdf = "No se pudo generar el reporte PDF. Verifica que el servidor backend esté activo.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeErrorPdf = "Ocurrió un error al descargar el reporte PDF.";
+        }
+        finally
+        {
+            generandoPdf = false;
+        }
     }
 
     

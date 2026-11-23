@@ -24,6 +24,25 @@ namespace Mimados.WebApp.Services.Implementations;
         return new Uri(_httpClient.BaseAddress!, $"{PATH}/historial/{mascotaId}/pdf").ToString();
     }
 
+    public async Task<byte[]?> DescargarPdfHistorialAsync(int mascotaId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{PATH}/historial/{mascotaId}/pdf");
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Error al descargar PDF de historial {MascotaId}: {Status}", mascotaId, response.StatusCode);
+                return null;
+            }
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al descargar PDF de historial {MascotaId}", mascotaId);
+            return null;
+        }
+    }
+
     public async Task<Mascota?> ObtenerMascotaPorIdAsync(int mascotaId)
     {
         try
