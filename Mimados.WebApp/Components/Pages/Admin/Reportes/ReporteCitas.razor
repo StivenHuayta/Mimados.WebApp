@@ -3,6 +3,7 @@
 @using Mimados.WebApp.Models
 @using Mimados.WebApp.Services.Interfaces
 @inject ICitaService CitaService
+@inject IJSRuntime JS
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="m-0 text-dark fw-bold">Reporte de Citas</h3>
@@ -40,8 +41,11 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100 fw-bold" disabled="@(cargando || citas.Count == 0)">
-                    Generar Reporte
+                <button type="button"
+                        class="btn btn-primary w-100 fw-bold"
+                        @onclick="GenerarPdfAsync"
+                        disabled="@(cargando || generandoPdf || citas.Count == 0)">
+                    @(generandoPdf ? "Generando..." : "Generar Reporte")
                 </button>
             </div>
         </div>
@@ -109,6 +113,7 @@
 
     private List<CitaReporteDto> citas = new();
     private bool cargando = false;
+    private bool generandoPdf = false;
     private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
@@ -132,9 +137,52 @@
         {
             citas = await CitaService.ListarParaReporteAsync(fechaInicio, fechaFin, estadoSeleccionado);
         }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+            citas.Clear();
+        }
         finally
         {
             cargando = false;
+        }
+    }
+
+    private async Task GenerarPdfAsync()
+    {
+        mensajeError = null;
+        generandoPdf = true;
+        try
+        {
+            var pdfBytes = await CitaService.DescargarReportePdfAsync(fechaInicio, fechaFin, estadoSeleccionado);
+            if (pdfBytes != null && pdfBytes.Length > 0)
+            {
+                await using var module = await JS.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "data:text/javascript;charset=utf-8," + Uri.EscapeDataString("""
+                        export function abrirPdf(bytes) {
+                            const blob = new Blob([bytes], { type: 'application/pdf' });
+                            const url = URL.createObjectURL(blob);
+                            const win = window.open(url, '_blank');
+                            if (!win) {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'ReporteCitas.pdf';
+                                a.click();
+                            }
+                        }
+                    """));
+
+                await module.InvokeVoidAsync("abrirPdf", pdfBytes);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+        }
+        finally
+        {
+            generandoPdf = false;
         }
     }
 
