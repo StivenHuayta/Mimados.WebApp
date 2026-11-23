@@ -209,4 +209,72 @@ public class CitaService : ICitaService
             return new PageResultDto<CitaVeterinarioDto>();
         }
     }
+
+    public async Task<List<CitaReporteDto>> ListarParaReporteAsync(
+    DateOnly? fechaInicio, DateOnly? fechaFin, string? estado)
+{
+    try
+    {
+        var queryParams = new List<string>();
+
+        if (fechaInicio.HasValue)
+            queryParams.Add($"fechaInicio={fechaInicio.Value:yyyy-MM-dd}");
+
+        if (fechaFin.HasValue)
+            queryParams.Add($"fechaFin={fechaFin.Value:yyyy-MM-dd}");
+
+        if (!string.IsNullOrWhiteSpace(estado))
+            queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+        var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+        var respuesta = await _http.GetFromJsonAsync<ApiResponse<List<CitaReporteDto>>>($"{PATH}/reporte{queryString}");
+
+        return respuesta?.Data ?? new List<CitaReporteDto>();
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error al listar citas para reporte");
+        return new List<CitaReporteDto>();
+    }
+}
+
+public async Task<byte[]?> DescargarReportePdfAsync(
+    DateOnly? fechaInicio, DateOnly? fechaFin, string? estado)
+{
+    var queryParams = new List<string>();
+
+    if (fechaInicio.HasValue)
+        queryParams.Add($"fechaInicio={fechaInicio.Value:yyyy-MM-dd}");
+
+    if (fechaFin.HasValue)
+        queryParams.Add($"fechaFin={fechaFin.Value:yyyy-MM-dd}");
+
+    if (!string.IsNullOrWhiteSpace(estado))
+        queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+    var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+    var response = await _http.GetAsync($"{PATH}/reporte/pdf{queryString}");
+
+    if (!response.IsSuccessStatusCode)
+    {
+        try
+        {
+            var errorApi = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            if (!string.IsNullOrWhiteSpace(errorApi?.Message))
+                throw new InvalidOperationException(errorApi.Message);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+
+        var detalle = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException($"Error {(int)response.StatusCode} al generar el PDF: {detalle}");
+    }
+
+    return await response.Content.ReadAsByteArrayAsync();
+}
 }
