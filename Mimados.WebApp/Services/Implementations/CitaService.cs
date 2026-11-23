@@ -237,4 +237,44 @@ public class CitaService : ICitaService
         return new List<CitaReporteDto>();
     }
 }
+
+public async Task<byte[]?> DescargarReportePdfAsync(
+    DateOnly? fechaInicio, DateOnly? fechaFin, string? estado)
+{
+    var queryParams = new List<string>();
+
+    if (fechaInicio.HasValue)
+        queryParams.Add($"fechaInicio={fechaInicio.Value:yyyy-MM-dd}");
+
+    if (fechaFin.HasValue)
+        queryParams.Add($"fechaFin={fechaFin.Value:yyyy-MM-dd}");
+
+    if (!string.IsNullOrWhiteSpace(estado))
+        queryParams.Add($"estado={Uri.EscapeDataString(estado.Trim())}");
+
+    var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+    var response = await _http.GetAsync($"{PATH}/reporte/pdf{queryString}");
+
+    if (!response.IsSuccessStatusCode)
+    {
+        try
+        {
+            var errorApi = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            if (!string.IsNullOrWhiteSpace(errorApi?.Message))
+                throw new InvalidOperationException(errorApi.Message);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+
+        var detalle = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException($"Error {(int)response.StatusCode} al generar el PDF: {detalle}");
+    }
+
+    return await response.Content.ReadAsByteArrayAsync();
+}
 }
