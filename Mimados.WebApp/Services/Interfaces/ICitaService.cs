@@ -16,4 +16,5 @@ public interface ICitaService
         int empleadoId, string? searchText, DateTime? fecha, string? estado,
         int pageNumber, int recordsPerPage);
     Task<List<CitaReporteDto>> ListarParaReporteAsync(DateOnly? fechaInicio, DateOnly? fechaFin, string? estado);
+    Task<byte[]?> DescargarReportePdfAsync(DateOnly? fechaInicio, DateOnly? fechaFin, string? estado);
 }
