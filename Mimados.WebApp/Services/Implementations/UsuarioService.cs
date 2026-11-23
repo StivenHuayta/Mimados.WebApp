@@ -57,6 +57,45 @@ public class UsuarioService : IUsuarioService
         }
     }
 
+    public async Task<bool> EsClienteActivoAsync(int idUsuario)
+    {
+        try
+        {
+            var res = await _httpClient.GetFromJsonAsync<ApiResponse<bool>>($"{PATH}/es-cliente/{idUsuario}");
+            return res != null && res.Success && res.Data;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar perfil de cliente para {IdUsuario}", idUsuario);
+            return false;
+        }
+    }
+
+    public async Task<(bool Success, string Message)> ActivarPerfilClienteAsync(int idUsuario, string? direccion, string? contactoEmergencia)
+    {
+        try
+        {
+            var payload = new
+            {
+                usuarioId = idUsuario,
+                direccion = direccion ?? string.Empty,
+                contactoEmergencia = contactoEmergencia ?? string.Empty
+            };
+            var response = await _httpClient.PostAsJsonAsync($"{PATH}/activar-cliente", payload);
+            var res = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            if (response.IsSuccessStatusCode && res != null && res.Success)
+            {
+                return (true, res.Message ?? "Perfil de cliente activado correctamente.");
+            }
+            return (false, res?.Message ?? "No se pudo activar el perfil de cliente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al activar perfil de cliente para {IdUsuario}", idUsuario);
+            return (false, "No se pudo conectar con el servidor.");
+        }
+    }
+
     public async Task<List<ClienteOpcionDTO>> ListarClientesAsync()
     {
         try

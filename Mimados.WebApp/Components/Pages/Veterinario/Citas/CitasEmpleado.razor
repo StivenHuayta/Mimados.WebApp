@@ -64,7 +64,7 @@
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 citas-empleado-table">
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-3">Código</th>
@@ -88,16 +88,34 @@
                                     <td><span class="badge @ClaseEstado(cita.Estado)">@cita.Estado</span></td>
                                     <td class="text-end pe-3">
                                         <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+
                                             @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
                                             {
-                                                <a class="btn btn-primary btn-sm" href="@($"/veterinario/atenciones/nueva?citaId={cita.CitaId}")">Atender</a>
+                                                <a class="btn btn-primary btn-sm"
+                                                   href="@($"/veterinario/atenciones/nueva?citaId={cita.CitaId}")">
+                                                    Atender
+                                                </a>
                                             }
-                                            <a class="btn btn-outline-primary btn-sm" href="@($"/empleado/citas/detalle/{cita.CitaId}")">Ver</a>
-                                            <a class="btn btn-outline-secondary btn-sm" href="@($"/empleado/citas/editar/{cita.CitaId}")">Editar</a>
+
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               href="@($"/empleado/citas/detalle/{cita.CitaId}")">
+                                                Ver
+                                            </a>
+
                                             @if (cita.Estado == "PROGRAMADA" || cita.Estado == "CONFIRMADA")
                                             {
-                                                <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => MostrarEliminar(cita.CitaId)">Cancelar</button>
+                                                <a class="btn btn-outline-secondary btn-sm"
+                                                   href="@($"/empleado/citas/editar/{cita.CitaId}")">
+                                                    Editar
+                                                </a>
+
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        type="button"
+                                                        @onclick="() => MostrarEliminar(cita.CitaId)">
+                                                    Cancelar
+                                                </button>
                                             }
+
                                         </div>
                                     </td>
                                 </tr>
@@ -148,6 +166,30 @@
         <div class="alert alert-success mt-3" role="status">Cita cancelada correctamente.</div>
     }
 </div>
+
+<style>
+    /* Mantener legible la tabla incluso cuando el tema de AdminLTE cambie. */
+    .citas-empleado-table {
+        --bs-table-bg: #ffffff;
+        --bs-table-color: #1e293b;
+        --bs-table-color-state: #1e293b;
+        --bs-table-hover-bg: #f1f5f9;
+        --bs-table-hover-color: #1e293b;
+        --bs-table-border-color: #e2e8f0;
+    }
+
+        .citas-empleado-table > tbody > tr > td {
+            color: #1e293b !important;
+        }
+
+        .citas-empleado-table > thead > tr > th {
+            color: #526581 !important;
+        }
+
+        .citas-empleado-table > tbody > tr > td .text-muted {
+            color: #64748b !important;
+        }
+</style>
 
 @code {
     private List<CitaVeterinarioDto> citas = new();

@@ -9,5 +9,7 @@ public interface IUsuarioService
     Task<bool> EliminarCuentaLogicaAsync(int idUsuario);
 
     Task<List<ClienteOpcionDTO>> ListarClientesAsync();
+    Task<bool> EsClienteActivoAsync(int idUsuario);
+    Task<(bool Success, string Message)> ActivarPerfilClienteAsync(int idUsuario, string? direccion, string? contactoEmergencia);
 
 }

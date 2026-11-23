@@ -12,5 +12,6 @@ public class Empleado
     public int SedeId { get; set; } = 1;
     public string? CodigoCmvp { get; set; }
     public bool EsAdmin { get; set; }
+    public bool EsVeterinario { get; set; }
     public bool Activo { get; set; } = true;
 }

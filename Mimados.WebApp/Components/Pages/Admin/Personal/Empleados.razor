@@ -58,7 +58,20 @@
                                 <td>@($"{emp.Nombres} {emp.Apellidos}")</td>
                                 <td>@emp.Telefono</td>
                                 <td>@emp.Email</td>
-                                <td>@(emp.EsAdmin ? "Administrador" : "Veterinario")</td>
+                                <td>
+                                    @if (emp.EsAdmin)
+                                    {
+                                        <span class="badge bg-primary me-1">Administrador</span>
+                                    }
+                                    @if (emp.EsVeterinario)
+                                    {
+                                        <span class="badge bg-info text-dark">Veterinario</span>
+                                    }
+                                    @if (!emp.EsAdmin && !emp.EsVeterinario)
+                                    {
+                                        <span class="text-muted small">Sin rol</span>
+                                    }
+                                </td>
                                 <td>
                                     @if (emp.Activo)
                                     {
@@ -99,6 +112,17 @@
                     <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">Roles del Empleado</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkEditAdmin" @bind="empleadoEditando.EsAdmin" />
+                            <label class="form-check-label" for="chkEditAdmin">Administrador</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkEditVet" @bind="empleadoEditando.EsVeterinario" />
+                            <label class="form-check-label" for="chkEditVet">Veterinario</label>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Código CMP (Si es veterinario)</label>
                         <input type="text" class="form-control" @bind="empleadoEditando.CodigoCmvp" @bind:event="oninput" placeholder="Ej: CMP-10293" />
@@ -143,7 +167,6 @@
     // Variables para el modal de edición
     private bool mostrarModal = false;
     private Empleado? empleadoEditando;
-    private string rolEdicion = "Veterinario";
     private string estadoEdicion = "true";
     private List<Sede> listaSedes;
 
@@ -185,9 +208,9 @@
             SedeId = emp.SedeId > 0 ? emp.SedeId : 1,
             CodigoCmvp = emp.CodigoCmvp,
             EsAdmin = emp.EsAdmin,
+            EsVeterinario = emp.EsVeterinario,
             Activo = emp.Activo
         };
-        rolEdicion = emp.EsAdmin ? "Administrador" : "Veterinario";
         estadoEdicion = emp.Activo ? "true" : "false";
         mostrarModal = true;
     }
@@ -202,12 +225,18 @@
     {
         if (empleadoEditando == null) return;
 
+        if (!empleadoEditando.EsAdmin && !empleadoEditando.EsVeterinario)
+        {
+            esError = true;
+            mensajeAlerta = "Debe asignar al menos un rol (Administrador o Veterinario).";
+            return;
+        }
+
         guardando = true;
         mensajeAlerta = null;
 
-        empleadoEditando.EsAdmin = (rolEdicion == "Administrador");
         empleadoEditando.Activo = (estadoEdicion == "true");
-        if (empleadoEditando.EsAdmin)
+        if (!empleadoEditando.EsVeterinario)
         {
             empleadoEditando.CodigoCmvp = null;
         }
@@ -248,6 +277,7 @@
             SedeId = emp.SedeId > 0 ? emp.SedeId : 1,
             CodigoCmvp = emp.CodigoCmvp,
             EsAdmin = emp.EsAdmin,
+            EsVeterinario = emp.EsVeterinario,
             Activo = false
         };
 

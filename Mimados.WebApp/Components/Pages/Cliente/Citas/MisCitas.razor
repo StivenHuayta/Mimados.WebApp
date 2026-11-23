@@ -64,7 +64,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var cita in listaCitas)
+                            @foreach (var cita in CitasPagina)
                             {
                                 <tr>
                                     <td class="ps-3">@($"C-{cita.CitaId:D3}")</td>
@@ -100,13 +100,95 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-3 border-top">
+                    <span class="text-muted small">
+                        Mostrando @((paginaActual - 1) * CITAS_POR_PAGINA + 1)-@Math.Min(paginaActual * CITAS_POR_PAGINA, listaCitas.Count)
+                        de @listaCitas.Count citas
+                    </span>
+
+                    @if (TotalPaginas > 1)
+                    {
+                        <nav aria-label="Paginación de mis citas">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(paginaActual == 1 ? "disabled" : "")">
+                                    <button type="button" class="page-link"
+                                            disabled="@(paginaActual == 1)"
+                                            @onclick="() => CambiarPagina(paginaActual - 1)">
+                                        Anterior
+                                    </button>
+                                </li>
+
+                                @foreach (var numeroPagina in PaginasVisibles)
+                                {
+                                    <li class="page-item @(numeroPagina == paginaActual ? "active" : "")">
+                                        <button type="button" class="page-link"
+                                                aria-label="Ir a la página @numeroPagina"
+                                                aria-current="@(numeroPagina == paginaActual ? "page" : null)"
+                                                @onclick="() => CambiarPagina(numeroPagina)">
+                                            @numeroPagina
+                                        </button>
+                                    </li>
+                                }
+
+                                <li class="page-item @(paginaActual == TotalPaginas ? "disabled" : "")">
+                                    <button type="button" class="page-link"
+                                            disabled="@(paginaActual == TotalPaginas)"
+                                            @onclick="() => CambiarPagina(paginaActual + 1)">
+                                        Siguiente
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
             }
         </div>
     </div>
 </div>
 
 @code {
+    private const int CITAS_POR_PAGINA = 10;
     private List<Cita> listaCitas = new();
+    private int paginaActual = 1;
+
+    private int TotalPaginas =>
+        (listaCitas.Count + CITAS_POR_PAGINA - 1) / CITAS_POR_PAGINA;
+
+    private IEnumerable<Cita> CitasPagina => listaCitas
+        .Skip((paginaActual - 1) * CITAS_POR_PAGINA)
+        .Take(CITAS_POR_PAGINA);
+
+    private IEnumerable<int> PaginasVisibles
+    {
+        get
+        {
+            const int MAX_PAGINAS_VISIBLES = 5;
+
+            int inicio = Math.Max(1, paginaActual - 2);
+
+            int fin = Math.Min(
+                TotalPaginas,
+                inicio + MAX_PAGINAS_VISIBLES - 1
+            );
+
+            inicio = Math.Max(
+                1,
+                fin - MAX_PAGINAS_VISIBLES + 1
+            );
+
+            return Enumerable.Range(inicio, fin - inicio + 1);
+        }
+    }
+
+    private void CambiarPagina(int nuevaPagina)
+    {
+        if (nuevaPagina >= 1 && nuevaPagina <= TotalPaginas)
+        {
+            paginaActual = nuevaPagina;
+        }
+    }
+
     private bool cargando = true;
     private string mensajeError = "";
 
@@ -117,9 +199,9 @@
 
         try
         {
-            // Identificar al cliente que inició sesión.
             var estado = await AuthStateProvider.GetAuthenticationStateAsync();
             var usuario = estado.User;
+
             string? idTexto = usuario.FindFirst("UsuarioId")?.Value;
 
             if (usuario.Identity?.IsAuthenticated != true ||
@@ -129,9 +211,8 @@
                 return;
             }
 
-            // Reutilizar el servicio de mascotas del proyecto.
             var mascotas = await MascotaService.ObtenerMascotasPorClienteAsync(usuarioId);
-            
+
             var tareas = mascotas.Select(async mascota =>
             {
                 var citasMascota = await CitaService
@@ -150,8 +231,10 @@
             listaCitas = resultados
                 .SelectMany(citas => citas)
                 .OrderByDescending(c => c.FechaHoraInicio)
+                .ThenByDescending(c => c.CitaId)
                 .ToList();
 
+            paginaActual = 1;
         }
         catch (Exception)
         {
